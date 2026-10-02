@@ -33,20 +33,28 @@ export function Laptop() {
         hoveredRef.current = hovered;
         return (
           <>
-            <RoundedBox args={[1.2, 0.05, 0.8]} radius={0.02} position={[0, 0.025, 0]} castShadow>
-              <meshStandardMaterial color={C.metal} metalness={0.7} roughness={0.3} />
+            <RoundedBox args={[1.2, 0.05, 0.8]} radius={0.02} smoothness={4} position={[0, 0.025, 0]} castShadow>
+              <meshPhysicalMaterial color={C.metal} metalness={0.85} roughness={0.28} clearcoat={0.3} />
             </RoundedBox>
             <mesh position={[0, 0.052, 0.1]} rotation={[-Math.PI / 2, 0, 0]}>
               <planeGeometry args={[1.0, 0.4]} />
-              <meshStandardMaterial color="#9fa3a9" metalness={0.5} roughness={0.5} />
+              <meshStandardMaterial color="#2a2d33" metalness={0.3} roughness={0.6} />
             </mesh>
             <group ref={lid} position={[0, 0.05, -0.4]} rotation={[-0.22, 0, 0]}>
-              <RoundedBox args={[1.2, 0.78, 0.035]} radius={0.015} position={[0, 0.39, 0]} castShadow>
-                <meshStandardMaterial color={C.metal} metalness={0.7} roughness={0.3} />
+              <RoundedBox args={[1.2, 0.78, 0.035]} radius={0.015} smoothness={4} position={[0, 0.39, 0]} castShadow>
+                <meshPhysicalMaterial color={C.metal} metalness={0.85} roughness={0.28} clearcoat={0.3} />
               </RoundedBox>
+              <mesh position={[0, 0.39, 0.0185]}>
+                <planeGeometry args={[1.16, 0.74]} />
+                <meshStandardMaterial color="#0d0e11" roughness={0.2} />
+              </mesh>
               <mesh position={[0, 0.39, 0.019]}>
                 <planeGeometry args={[1.1, 0.68]} />
                 <meshBasicMaterial ref={screen} map={texture} toneMapped={false} />
+              </mesh>
+              <mesh position={[0, 0.39, 0.021]}>
+                <planeGeometry args={[1.1, 0.68]} />
+                <meshPhysicalMaterial transparent opacity={0.12} roughness={0.05} clearcoat={1} color="#ffffff" />
               </mesh>
             </group>
           </>
@@ -79,7 +87,7 @@ export function InboxTray() {
         return (
           <>
             <RoundedBox args={[0.78, 0.04, 0.56]} radius={0.01} position={[0, 0.02, 0]} castShadow>
-              <meshStandardMaterial color={C.ink} metalness={0.3} roughness={0.4} />
+              <meshPhysicalMaterial color={C.ink} metalness={0.6} roughness={0.3} clearcoat={0.5} />
             </RoundedBox>
             <mesh position={[0, 0.07, -0.27]}>
               <boxGeometry args={[0.78, 0.1, 0.02]} />
@@ -186,7 +194,7 @@ export function CertWall() {
             <group rotation={[0, 0, hovered ? -0.03 : 0]}>
               <mesh castShadow>
                 <boxGeometry args={[1.32, 0.96, 0.05]} />
-                <meshStandardMaterial color={hovered ? C.bronze : C.ink} roughness={0.5} />
+                <meshPhysicalMaterial color={hovered ? C.bronze : C.ink} roughness={0.35} metalness={hovered ? 0.6 : 0.1} clearcoat={0.6} />
               </mesh>
               <mesh position={[0, 0, 0.027]}>
                 <planeGeometry args={[1.22, 0.86]} />
@@ -194,7 +202,7 @@ export function CertWall() {
               </mesh>
               <mesh position={[0, 0, 0.03]}>
                 <planeGeometry args={[1.08, 0.76]} />
-                <meshStandardMaterial map={textures[i]} roughness={0.6} />
+                <meshPhysicalMaterial map={textures[i]} roughness={0.3} clearcoat={1} clearcoatRoughness={0.05} />
               </mesh>
             </group>
           )}
@@ -210,14 +218,19 @@ export function DeskProps() {
       {/* Mug */}
       <group position={[1.35, 1.55, -2.95]}>
         <mesh position={[0, 0.1, 0]} castShadow>
-          <cylinderGeometry args={[0.085, 0.08, 0.2, 32]} />
-          <meshStandardMaterial color={C.ink} roughness={0.35} />
+          <cylinderGeometry args={[0.085, 0.08, 0.2, 40]} />
+          <meshPhysicalMaterial color={C.ink} roughness={0.25} clearcoat={1} clearcoatRoughness={0.1} />
         </mesh>
         <mesh position={[0.1, 0.1, 0]} rotation={[0, 0, Math.PI / 2]}>
           <torusGeometry args={[0.05, 0.015, 12, 24, Math.PI]} />
           <meshStandardMaterial color={C.ink} roughness={0.35} />
         </mesh>
       </group>
+      {/* Mouse */}
+      <mesh position={[1.05, 1.57, -2.8]} scale={[0.07, 0.035, 0.11]} castShadow>
+        <sphereGeometry args={[1, 24, 16]} />
+        <meshPhysicalMaterial color="#e8e4dc" roughness={0.3} clearcoat={0.6} />
+      </mesh>
       {/* Book stack */}
       {[
         [0.06, C.bronze, 0.1],

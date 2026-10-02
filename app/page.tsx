@@ -58,7 +58,7 @@ export default function Home() {
   return (
     <>
       <RoomExperience />
-      <TourProgress />
+      <TourProgress stops={["Intro", ...projects.map((p) => p.title), "Certificates", "Fin"]} />
 
       <div id="tour" className="pointer-events-none relative z-10">
         {/* Intro */}
@@ -150,10 +150,10 @@ export default function Home() {
           </Stage>
         ))}
 
-        <Stage index={5}>
+        <Stage index={projects.length + 1}>
           <Panel>
             <p data-reveal-item className="eyebrow">
-              <span className="text-accent">05</span> &nbsp;/&nbsp; The wall
+              <span className="text-accent">{String(projects.length + 1).padStart(2, "0")}</span> &nbsp;/&nbsp; The wall
             </p>
             <h2 data-reveal-item className="mt-5 font-display text-4xl leading-[1.02] tracking-tight text-ink sm:text-5xl">
               Certified by <em className="italic">industry</em>.
@@ -170,7 +170,7 @@ export default function Home() {
           </Panel>
         </Stage>
 
-        <section id="stage-6" className="flex h-[100svh] items-end px-5 pb-10 sm:px-10 md:items-center md:pb-0">
+        <section id={`stage-${projects.length + 2}`} className="flex h-[100svh] items-end px-5 pb-10 sm:px-10 md:items-center md:pb-0">
           <div className="mx-auto w-full max-w-[1400px]">
             <div className="pointer-events-auto max-w-xl">
               <SplitReveal className="font-display text-[clamp(2.75rem,6vw,5.5rem)] leading-[0.95] tracking-[-0.03em] text-ink">

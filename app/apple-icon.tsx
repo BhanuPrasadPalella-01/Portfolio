@@ -6,6 +6,7 @@ export const size = {
 };
 export const contentType = "image/png";
 
+// bp monogram on ink (iOS adds its own rounded corners).
 export default function AppleIcon() {
   return new ImageResponse(
     (
@@ -16,14 +17,26 @@ export default function AppleIcon() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#8A5C2C",
+          background: "#16181D",
           color: "#F4F0E8",
-          fontSize: 84,
-          fontWeight: 700,
+          fontSize: 96,
+          fontStyle: "italic",
+          fontFamily: "Georgia, serif",
           letterSpacing: -2,
+          paddingBottom: 8,
         }}
       >
-        BP
+        bp
+        <div
+          style={{
+            width: 14,
+            height: 14,
+            borderRadius: 7,
+            background: "#B5844F",
+            marginLeft: 4,
+            marginTop: 44,
+          }}
+        />
       </div>
     ),
     { ...size }

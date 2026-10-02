@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import ProjectCover from "../../components/ProjectCover";
 import TransitionLink from "../../components/transition/TransitionLink";
@@ -64,6 +65,12 @@ export default async function ProjectPage({ params }: PageProps<"/work/[slug]">)
               <dt className="text-ink-soft">In the room</dt>
               <dd className="mt-1 text-ink">{project.roomObject}</dd>
             </div>
+            {project.team && (
+              <div className="col-span-2 md:col-span-1 md:max-w-[16rem]">
+                <dt className="text-ink-soft">Team</dt>
+                <dd className="mt-1 leading-relaxed text-ink normal-case tracking-normal">{project.team}</dd>
+              </div>
+            )}
             {project.links?.map((l) => (
               <div key={l.href}>
                 <dt className="text-ink-soft">Link</dt>
@@ -80,9 +87,31 @@ export default async function ProjectPage({ params }: PageProps<"/work/[slug]">)
 
       <div className="mx-auto mt-16 w-full max-w-[1400px] px-5 sm:px-10">
         <ParallaxCover>
-          <ProjectCover slug={project.slug} className="h-full w-full" />
+          {project.heroImage ? (
+            <Image
+              src={project.heroImage}
+              alt=""
+              fill
+              priority
+              sizes="(max-width: 1400px) 100vw, 1400px"
+              className="object-cover object-[50%_45%]"
+            />
+          ) : (
+            <ProjectCover slug={project.slug} className="h-full w-full" />
+          )}
         </ParallaxCover>
       </div>
+
+      {project.role && (
+        <section className="mx-auto mt-16 w-full max-w-[1400px] px-5 sm:px-10">
+          <Reveal>
+            <p className="max-w-3xl border-l-2 border-accent pl-6 text-lg text-ink">
+              <span className="eyebrow mb-2 block">My part</span>
+              {project.role}
+            </p>
+          </Reveal>
+        </section>
+      )}
 
       {/* Stats */}
       <section className="mx-auto mt-24 w-full max-w-[1400px] px-5 sm:px-10">
@@ -98,6 +127,36 @@ export default async function ProjectPage({ params }: PageProps<"/work/[slug]">)
         </Reveal>
       </section>
 
+      {/* Live demo */}
+      {project.demo && (
+        <section className="mx-auto mt-32 w-full max-w-[1400px] px-5 sm:px-10">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <p className="eyebrow">
+              <span className="text-accent">●</span> Live demo
+            </p>
+            <a
+              href={project.demo.src}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="link-line self-start font-mono text-[11px] tracking-[0.18em] text-ink uppercase"
+            >
+              Open full screen ↗
+            </a>
+          </div>
+          <p className="mt-4 max-w-2xl text-ink-soft">{project.demo.note}</p>
+          <Reveal className="mt-8">
+            <div className="overflow-hidden rounded-[1.75rem] border border-ink/10 bg-[#04040c] shadow-[0_40px_80px_-40px_rgba(0,0,0,0.6)]">
+              <iframe
+                src={project.demo.src}
+                title={`${project.title} live demo`}
+                loading="lazy"
+                className="block aspect-[16/10] w-full"
+              />
+            </div>
+          </Reveal>
+        </section>
+      )}
+
       {/* Overview */}
       <section className="mx-auto mt-32 grid w-full max-w-[1400px] gap-10 px-5 sm:px-10 md:grid-cols-[1fr_2fr]">
         <p className="eyebrow">
@@ -107,6 +166,32 @@ export default async function ProjectPage({ params }: PageProps<"/work/[slug]">)
           {project.overview}
         </SplitReveal>
       </section>
+
+      {/* Gallery */}
+      {project.images && project.images.length > 0 && (
+        <section className="mx-auto mt-32 w-full max-w-[1400px] px-5 sm:px-10">
+          <p className="eyebrow">
+            <span className="text-accent">●</span> Gallery
+          </p>
+          <Reveal className={`mt-8 grid gap-6 ${project.images.length > 1 ? "md:grid-cols-2" : ""}`}>
+            {project.images.map((img) => (
+              <figure key={img.src} data-reveal-item>
+                <TiltCard max={5} className="group overflow-hidden rounded-[1.5rem] border border-ink/10 bg-surface">
+                  <Image
+                    src={img.src}
+                    alt={img.alt}
+                    width={img.width}
+                    height={img.height}
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    className="h-auto w-full transition-transform duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.03]"
+                  />
+                </TiltCard>
+                <figcaption className="mt-3 font-mono text-[11px] tracking-[0.12em] text-ink-soft uppercase">{img.caption}</figcaption>
+              </figure>
+            ))}
+          </Reveal>
+        </section>
+      )}
 
       {/* What I built */}
       <section className="mx-auto mt-32 w-full max-w-[1400px] px-5 sm:px-10">
@@ -159,7 +244,7 @@ export default async function ProjectPage({ params }: PageProps<"/work/[slug]">)
           {project.links && (
             <Reveal className="mt-12">
               {project.links.map((l) => (
-                <Magnetic key={l.href}>
+                <Magnetic key={l.href} className="mr-3 mb-3">
                   <a
                     href={l.href}
                     target="_blank"

@@ -88,12 +88,12 @@ export default function TransitionProvider({ children }: { children: React.React
         aria-hidden="true"
         className="pointer-events-none invisible fixed inset-0 z-[150]"
       >
-        <div data-panel className="absolute inset-0 bg-accent" />
-        <div data-panel className="absolute inset-0 flex items-center justify-center bg-ink">
+        <div data-panel className="absolute inset-0 bg-[#8a5c2c]" />
+        <div data-panel className="absolute inset-0 flex items-center justify-center bg-night">
           <div className="overflow-hidden">
             <p
               data-label
-              className="font-display text-5xl text-background capitalize italic sm:text-7xl"
+              className="font-display text-5xl text-paper capitalize italic sm:text-7xl"
             >
               {label}
             </p>

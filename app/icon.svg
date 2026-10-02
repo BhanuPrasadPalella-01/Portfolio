@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <style>
+    .tile { fill: #16181D; } .mark { fill: #F4F0E8; } .dot { fill: #B5844F; }
+    @media (prefers-color-scheme: dark) { .tile { fill: #EDE7DB; } .mark { fill: #101114; } .dot { fill: #8A5C2C; } }
+  </style>
+  <rect class="tile" width="120" height="120" rx="28"/>
+  <text class="mark" x="57" y="80" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="64" letter-spacing="-1">bp</text>
+  <circle class="dot" cx="96" cy="80" r="6"/>
+</svg>

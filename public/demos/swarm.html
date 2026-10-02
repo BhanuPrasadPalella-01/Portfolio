@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SwarmBot — Autonomous Mapping System</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+:root {
+  --bg:#04040c; --panel:#07071a; --border:#12122a;
+  --r1:#00e5ff; --r2:#00ff88; --r3:#ffcc00;
+  --obs:#ff4444; --text:#c0c0d0; --dim:#3a3a5a;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Share Tech Mono',monospace;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+
+/* TOPBAR */
+.topbar{background:var(--panel);border-bottom:2px solid var(--border);padding:7px 14px;display:flex;align-items:center;gap:12px;flex-shrink:0;}
+.logo{font-family:'Orbitron',monospace;font-size:0.82em;font-weight:900;color:var(--r1);letter-spacing:3px;white-space:nowrap;}
+.logo span{color:#fff;}
+.vline{width:1px;height:28px;background:var(--border);}
+.top-stats{display:flex;gap:8px;flex:1;flex-wrap:wrap;}
+.tstat{background:#0a0a1e;border:1px solid var(--border);border-radius:4px;padding:2px 10px;font-size:0.62em;min-width:72px;}
+.tstat-label{color:var(--dim);font-size:0.85em;}
+.tstat-val{color:var(--r1);font-size:1.25em;font-weight:bold;margin-top:1px;}
+.top-btns{display:flex;gap:5px;}
+.btn{padding:5px 14px;border-radius:4px;border:1px solid;cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:0.7em;letter-spacing:1px;transition:all .2s;white-space:nowrap;}
+.btn-start{background:#00ff8818;border-color:#00ff88;color:#00ff88;}
+.btn-start:hover{background:#00ff8830;}
+.btn-new{background:#ffcc0018;border-color:#ffcc00;color:#ffcc00;}
+.btn-new:hover{background:#ffcc0030;}
+.btn-stop{background:#ff444418;border-color:#ff4444;color:#ff4444;}
+.btn-stop:hover{background:#ff444430;}
+.btn:disabled{opacity:.3;cursor:not-allowed;}
+
+/* WORKSPACE */
+.workspace{flex:1;display:grid;grid-template-columns:1fr 290px;overflow:hidden;}
+
+/* CANVAS AREA */
+.canvas-area{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);overflow:hidden;}
+.view-panel{background:var(--bg);position:relative;overflow:hidden;}
+.view-label{position:absolute;top:7px;left:9px;font-size:0.56em;color:var(--dim);letter-spacing:2px;text-transform:uppercase;z-index:2;pointer-events:none;}
+.view-label span{color:var(--r1);}
+canvas{width:100%;height:100%;display:block;}
+.cov-bar{position:absolute;bottom:6px;left:9px;right:9px;height:3px;background:#0f0f22;border-radius:2px;overflow:hidden;}
+.cov-fill{height:100%;background:linear-gradient(90deg,#00e5ff,#00ff88);border-radius:2px;transition:width .3s;width:0%;}
+.cov-label{position:absolute;bottom:13px;right:9px;font-size:0.55em;color:var(--dim);}
+
+/* ALERT OVERLAY */
+.alert-overlay{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  pointer-events:none;z-index:10;
+  opacity:0;transition:opacity .5s;
+}
+.alert-overlay.show{opacity:1;}
+.alert-box{
+  border-radius:12px;padding:20px 36px;text-align:center;
+  backdrop-filter:blur(4px);
+}
+.alert-box.danger{
+  background:#1a000088;border:2px solid #ff0000;
+  box-shadow:0 0 60px #ff000055,inset 0 0 40px #ff000022;
+  animation:pulseD 1s infinite;
+}
+.alert-box.warning{
+  background:#1a100088;border:2px solid #ff8800;
+  box-shadow:0 0 40px #ff880044,inset 0 0 30px #ff880011;
+  animation:pulseW 1.2s infinite;
+}
+@keyframes pulseD{0%,100%{box-shadow:0 0 60px #ff000055,inset 0 0 40px #ff000022;}50%{box-shadow:0 0 90px #ff0000aa,inset 0 0 60px #ff000033;}}
+@keyframes pulseW{0%,100%{box-shadow:0 0 40px #ff880044;}50%{box-shadow:0 0 70px #ff880088;}}
+.alert-icon{font-size:2.2em;margin-bottom:8px;}
+.alert-title{font-family:'Orbitron',monospace;font-size:1.2em;font-weight:900;letter-spacing:3px;}
+.alert-title.danger{color:#ff3333;}
+.alert-title.warning{color:#ff8800;}
+.alert-msg{font-size:0.72em;margin-top:6px;line-height:1.6;}
+.alert-msg.danger{color:#ff8888;}
+.alert-msg.warning{color:#ffcc88;}
+.alert-sub{font-size:0.62em;margin-top:8px;opacity:.6;}
+
+/* SIDE */
+.side{background:var(--panel);border-left:2px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.side-block{border-bottom:1px solid var(--border);padding:9px 11px;flex-shrink:0;}
+.sb-title{font-size:0.56em;color:var(--dim);letter-spacing:2px;text-transform:uppercase;margin-bottom:7px;}
+
+/* TELEM CARDS */
+.telem-card{border:1px solid;border-radius:6px;padding:7px 9px;margin-bottom:6px;position:relative;overflow:hidden;transition:all .4s;}
+.telem-card::after{content:'';position:absolute;top:0;left:0;width:100%;height:2px;}
+.tc-r1{border-color:#00e5ff33;} .tc-r1::after{background:var(--r1);}
+.tc-r2{border-color:#00ff8833;} .tc-r2::after{background:var(--r2);}
+.tc-r3{border-color:#ffcc0033;} .tc-r3::after{background:var(--r3);}
+.tc-dead{border-color:#ff444433!important;opacity:.45;}
+.tc-dead::after{background:#ff4444!important;}
+.tc-header{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
+.tc-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.tc-name{font-family:'Orbitron',monospace;font-size:0.74em;font-weight:700;}
+.tc-badge{margin-left:auto;font-size:0.58em;padding:1px 7px;border-radius:10px;border:1px solid;}
+.badge-active{background:#00ff8812;border-color:#00ff8844;color:#00ff88;}
+.badge-fault{background:#ff444412;border-color:#ff444444;color:#ff4444;animation:fblink .7s infinite;}
+.badge-obs{background:#ffcc0012;border-color:#ffcc0044;color:#ffcc00;}
+.badge-reform{background:#aa88ff12;border-color:#aa88ff44;color:#aa88ff;animation:fblink 1s infinite;}
+@keyframes fblink{0%,100%{opacity:1}50%{opacity:.3}}
+.tc-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px;}
+.tc-field{background:#0a0a1e;border-radius:3px;padding:3px 6px;}
+.tc-field-label{font-size:0.52em;color:var(--dim);letter-spacing:1px;text-transform:uppercase;}
+.tc-field-val{font-size:0.78em;color:var(--text);margin-top:1px;}
+.tc-field-val.hi{color:var(--r1);}
+.tc-field.full{grid-column:1/-1;}
+
+/* HB */
+.hb-section{padding:7px 11px;border-bottom:1px solid var(--border);}
+.hb-row{display:flex;align-items:center;gap:5px;margin-bottom:3px;}
+.hb-label{font-size:0.6em;width:24px;flex-shrink:0;}
+.hb-track{flex:1;height:11px;background:#08081a;border-radius:2px;overflow:hidden;display:flex;gap:1px;padding:1px 2px;align-items:center;}
+.hb-bit{flex:1;border-radius:1px;transition:all .15s;min-height:2px;}
+
+/* LOG */
+.side-block.log-block{flex:1;overflow:hidden;display:flex;flex-direction:column;}
+.obs-log{flex:1;overflow-y:auto;font-size:0.6em;line-height:1.85;padding:4px 2px;}
+.obs-log::-webkit-scrollbar{width:3px;}
+.obs-log::-webkit-scrollbar-thumb{background:var(--border);}
+.le{color:#2a2a4a;} .le.ok{color:#00ff88;} .le.info{color:#00aadd;}
+.le.warn{color:#ff8800;} .le.fault{color:#ff4444;font-weight:bold;}
+.le.reform{color:#aa88ff;} .le.danger{color:#ff0000;font-weight:bold;letter-spacing:1px;}
+
+/* STATUS BANNER */
+.status-banner{
+  position:absolute;bottom:28px;left:50%;transform:translateX(-50%);
+  background:#0a0a1e;border:1px solid var(--border);
+  border-radius:6px;padding:4px 14px;font-size:0.62em;
+  color:var(--dim);white-space:nowrap;z-index:3;pointer-events:none;
+  transition:all .3s;
+}
+.status-banner.warn-mode{border-color:#ff880066;color:#ff8800;}
+.status-banner.danger-mode{border-color:#ff000066;color:#ff3333;}
+
+/* KILL HINT */
+.kill-hint{position:absolute;bottom:6px;left:9px;font-size:0.52em;color:#2a2a4a;z-index:2;pointer-events:none;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">SWARM<span>BOT</span> · AMS</div>
+  <div class="vline"></div>
+  <div class="top-stats">
+    <div class="tstat"><div class="tstat-label">MISSION TIME</div><div class="tstat-val" id="tMission">00:00</div></div>
+    <div class="tstat"><div class="tstat-label">OBSTACLES</div><div class="tstat-val" id="tObs">0</div></div>
+    <div class="tstat"><div class="tstat-label">DETECTED</div><div class="tstat-val" id="tDet">0</div></div>
+    <div class="tstat"><div class="tstat-label">MAP COV.</div><div class="tstat-val" id="tCov">0%</div></div>
+    <div class="tstat"><div class="tstat-label">ACTIVE BOTS</div><div class="tstat-val" id="tActive">3</div></div>
+    <div class="tstat"><div class="tstat-label">FORMATION</div><div class="tstat-val" id="tForm" style="font-size:.85em">TRIANGLE</div></div>
+  </div>
+  <div class="top-btns">
+    <button class="btn btn-new"   onclick="newMap()">⟳ NEW MAP</button>
+    <button class="btn btn-start" id="btnStart" onclick="startSim()">▶️ START</button>
+    <button class="btn btn-stop"  id="btnStop"  onclick="stopSim()" disabled>■ STOP</button>
+  </div>
+</div>
+
+<div class="workspace">
+  <div class="canvas-area">
+
+    <!-- ARENA -->
+    <div class="view-panel" id="arenaPanel">
+      <div class="view-label">ARENA VIEW — <span>LIVE ROBOT POSITIONS</span></div>
+      <canvas id="arenaCanvas"></canvas>
+      <div class="alert-overlay" id="alertOverlay">
+        <div class="alert-box" id="alertBox">
+          <div class="alert-icon" id="alertIcon">⚠</div>
+          <div class="alert-title" id="alertTitle">WARNING</div>
+          <div class="alert-msg"   id="alertMsg">msg</div>
+          <div class="alert-sub"   id="alertSub">sub</div>
+        </div>
+      </div>
+      <div class="status-banner" id="statusBanner">■ ALL SYSTEMS NOMINAL</div>
+      <div class="kill-hint">KEYBOARD: [1] KILL R1 · [2] KILL R2 · [3] KILL R3</div>
+    </div>
+
+    <!-- MAP -->
+    <div class="view-panel" id="mapPanel">
+      <div class="view-label">OBSTACLE MAP — <span>BUILT IN REAL TIME</span></div>
+      <canvas id="mapCanvas"></canvas>
+      <div class="cov-label" id="covLabel">Coverage: 0%</div>
+      <div class="cov-bar"><div class="cov-fill" id="covFill"></div></div>
+    </div>
+
+  </div>
+
+  <!-- SIDE -->
+  <div class="side">
+
+    <div class="side-block">
+      <div class="sb-title">Robot Telemetry</div>
+
+      <!-- R1 -->
+      <div class="telem-card tc-r1" id="card0">
+        <div class="tc-header">
+          <div class="tc-dot" style="background:#00e5ff;box-shadow:0 0 6px #00e5ff80"></div>
+          <div class="tc-name" style="color:#00e5ff">ROBOT 1</div>
+          <div class="tc-badge badge-active" id="badge0">● ACTIVE</div>
+        </div>
+        <div class="tc-grid">
+          <div class="tc-field"><div class="tc-field-label">X Pos</div><div class="tc-field-val hi" id="r0x">—</div></div>
+          <div class="tc-field"><div class="tc-field-label">Y Pos</div><div class="tc-field-val hi" id="r0y">—</div></div>
+          <div class="tc-field"><div class="tc-field-label">Velocity</div><div class="tc-field-val" id="r0v">—</div></div>
+          <div class="tc-field"><div class="tc-field-label">Heading</div><div class="tc-field-val" id="r0h">—</div></div>
+          <div class="tc-field full"><div class="tc-field-label">Distance Travelled</div><div class="tc-field-val hi" id="r0d">—</div></div>
+          <div class="tc-field full"><div class="tc-field-label">ToF Obstacle Distance</div><div class="tc-field-val" id="r0tof">—</div></div>
+        </div>
+      </div>
+
+      <!-- R2 -->
+      <div class="telem-card tc-r2" id="card1">
+        <div class="tc-header">
+          <div class="tc-dot" style="background:#00ff88;box-shadow:0 0 6px #00ff8880"></div>
+          <div class="tc-name" style="color:#00ff88">ROBOT 2</div>
+          <div class="tc-badge badge-active" id="badge1">● ACTIVE</div>
+        </div>
+        <div class="tc-grid">
+          <div class="tc-field"><div class="tc-field-label">X Pos</div><div class="tc-field-val hi" id="r1x">—</div></div>
+          <div class="tc-field"><div class="tc-field-label">Y Pos</div><div class="tc-field-val hi" id="r1y">—</div></div>
+          <div class="tc-field"><div class="tc-field-label">Velocity</div><div class="tc-field-val" id="r1v">—</div></div>
+          <div class="tc-field"><div class="tc-field-label">Heading</div><div class="tc-field-val" id="r1h">—</div></div>
+          <div class="tc-field full"><div class="tc-field-label">Distance Travelled</div><div class="tc-field-val hi" id="r1d">—</div></div>
+          <div class="tc-field full"><div class="tc-field-label">ToF Obstacle Distance</div><div class="tc-field-val" id="r1tof">—</div></div>
+        </div>
+      </div>
+
+      <!-- R3 -->
+      <div class="telem-card tc-r3" id="card2">
+        <div class="tc-header">
+          <div class="tc-dot" style="background:#ffcc00;box-shadow:0 0 6px #ffcc0080"></div>
+          <div class="tc-name" style="color:#ffcc00">ROBOT 3</div>
+          <div class="tc-badge badge-active" id="badge2">● ACTIVE</div>
+        </div>
+        <div class="tc-grid">
+          <div class="tc-field"><div class="tc-field-label">X Pos</div><div class="tc-field-val hi" id="r2x">—</div></div>
+          <div class="tc-field"><div class="tc-field-label">Y Pos</div><div class="tc-field-val hi" id="r2y">—</div></div>
+          <div class="tc-field"><div class="tc-field-label">Velocity</div><div class="tc-field-val" id="r2v">—</div></div>
+          <div class="tc-field"><div class="tc-field-label">Heading</div><div class="tc-field-val" id="r2h">—</div></div>
+          <div class="tc-field full"><div class="tc-field-label">Distance Travelled</div><div class="tc-field-val hi" id="r2d">—</div></div>
+          <div class="tc-field full"><div class="tc-field-label">ToF Obstacle Distance</div><div class="tc-field-val" id="r2tof">—</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HEARTBEAT -->
+    <div class="hb-section">
+      <div class="sb-title">ESP-NOW Heartbeat Signal</div>
+      <div class="hb-row"><div class="hb-label" style="color:#00e5ff">R1</div><div class="hb-track" id="hb0"></div></div>
+      <div class="hb-row"><div class="hb-label" style="color:#00ff88">R2</div><div class="hb-track" id="hb1"></div></div>
+      <div class="hb-row"><div class="hb-label" style="color:#ffcc00">R3</div><div class="hb-track" id="hb2"></div></div>
+    </div>
+
+    <!-- LOG -->
+    <div class="side-block log-block">
+      <div class="sb-title">System Log</div>
+      <div class="obs-log" id="obsLog"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const arenaC = document.getElementById('arenaCanvas');
+const aC     = arenaC.getContext('2d');
+const mapC   = document.getElementById('mapCanvas');
+const mC     = mapC.getContext('2d');
+
+const COLORS = ['#00e5ff','#00ff88','#ffcc00'];
+const TOF_RANGE   = 130;
+const BOT_R       = 9;
+const MIN_DIST    = 70;   // minimum distance robots must keep from each other
+const PREFER_DIST = 110;  // preferred formation distance
+const MAX_DIST    = 160;  // max before cohesion pulls them back
+const BOT_SPEED   = 1.7;
+const CELL        = 20;
+
+let W, H, gridW, gridH;
+let obstacles  = [];
+let robots     = [];
+let mapGrid    = null;
+let running    = false;
+let animId     = null;
+let simT       = 0;
+let lastTs     = 0;
+let hbHist     = [[],[],[]];
+let hbTick     = 0;
+let detObs     = new Set();
+let alertState = 'none'; // 'none' | 'warning' | 'danger'
+let reforming  = false;
+let reformTimer= 0;
+
+// ── RESIZE ───────────────────────────────────────────────────────────
+function resize() {
+  const ap = document.getElementById('arenaPanel');
+  const mp = document.getElementById('mapPanel');
+  arenaC.width  = ap.offsetWidth;  arenaC.height = ap.offsetHeight;
+  mapC.width    = mp.offsetWidth;  mapC.height   = mp.offsetHeight;
+  W = arenaC.width; H = arenaC.height;
+  gridW = Math.ceil(W/CELL); gridH = Math.ceil(H/CELL);
+}
+
+// ── OBSTACLES ────────────────────────────────────────────────────────
+function generateObstacles() {
+  obstacles = [];
+  const n = 14 + Math.floor(Math.random()*8);
+  for (let i=0; i<n; i++) {
+    let tries=0;
+    while(tries++<40) {
+      const x = 60 + Math.random()*(W-120);
+      const y = 60 + Math.random()*(H-120);
+      const r = 14 + Math.random()*20;
+      if(Math.hypot(x-W/2,y-H/2)<110) continue;
+      const ov = obstacles.some(o=>Math.hypot(o.x-x,o.y-y)<o.r+r+15);
+      if(!ov){ obstacles.push({x,y,r,detected:false}); break; }
+    }
+  }
+  document.getElementById('tObs').textContent = obstacles.length;
+}
+
+// ── SPAWN ─────────────────────────────────────────────────────────────
+function spawnRobots() {
+  // Triangle formation around center
+  const cx=W/2, cy=H/2, fd=PREFER_DIST*0.8;
+  robots = [
+    {id:0, x:cx,      y:cy-fd,   vx:1.1,  vy:0.3,  alive:true,  dist:0, tof:TOF_RANGE, reformTarget:null},
+    {id:1, x:cx-fd*0.87, y:cy+fd*0.5, vx:-0.5, vy:1.3, alive:true, dist:0, tof:TOF_RANGE, reformTarget:null},
+    {id:2, x:cx+fd*0.87, y:cy+fd*0.5, vx:0.8,  vy:-1.2, alive:true, dist:0, tof:TOF_RANGE, reformTarget:null},
+  ];
+}
+
+// ── FORMATION TARGETS ────────────────────────────────────────────────
+// When robots die, surviving ones get new formation targets
+function computeFormationTargets() {
+  const alive = robots.filter(r=>r.alive);
+  const n = alive.length;
+  if(n===0) return;
+
+  // Centroid of alive robots
+  const cx = alive.reduce((s,r)=>s+r.x,0)/n;
+  const cy = alive.reduce((s,r)=>s+r.y,0)/n;
+
+  if(n===3) {
+    // Triangle formation
+    alive.forEach((r,i)=>{
+      const a = (i/3)*Math.PI*2 - Math.PI/2;
+      r.reformTarget = { x: cx+Math.cos(a)*PREFER_DIST*0.8, y: cy+Math.sin(a)*PREFER_DIST*0.8 };
+    });
+    document.getElementById('tForm').textContent='TRIANGLE';
+  } else if(n===2) {
+    // Side by side formation
+    alive.forEach((r,i)=>{
+      const offset = (i===0?-1:1)*(MIN_DIST+20);
+      r.reformTarget = { x: cx+offset, y: cy };
+    });
+    document.getElementById('tForm').textContent='LINE-2';
+  } else if(n===1) {
+    alive[0].reformTarget = null;
+    document.getElementById('tForm').textContent='SOLO';
+  }
+}
+
+// ── BOIDS + FORMATION ────────────────────────────────────────────────
+function computeForce(b) {
+  let fx=0, fy=0;
+  const alive = robots.filter(o=>o.alive && o.id!==b.id);
+
+  for(const o of alive) {
+    const dx=b.x-o.x, dy=b.y-o.y;
+    const d=Math.hypot(dx,dy)||0.001;
+
+    // Hard separation — never get closer than MIN_DIST
+    if(d < MIN_DIST) {
+      const strength = ((MIN_DIST-d)/MIN_DIST)*6.0;
+      fx += (dx/d)*strength;
+      fy += (dy/d)*strength;
+    }
+    // Soft alignment zone
+    if(d > MIN_DIST && d < PREFER_DIST) {
+      // Mild alignment
+      fx += (o.vx - b.vx)*0.15;
+      fy += (o.vy - b.vy)*0.15;
+    }
+    // Cohesion — don't drift too far
+    if(d > MAX_DIST) {
+      const pull = (d-MAX_DIST)/MAX_DIST;
+      fx -= (dx/d)*pull*2.5;
+      fy -= (dy/d)*pull*2.5;
+    }
+  }
+
+  // Formation target pull (after reformation)
+  if(b.reformTarget) {
+    const dx=b.reformTarget.x - b.x;
+    const dy=b.reformTarget.y - b.y;
+    const d=Math.hypot(dx,dy)||0.001;
+    if(d>20) { fx+=dx/d*1.5; fy+=dy/d*1.5; }
+  }
+
+  // Obstacle avoidance
+  for(const o of obstacles) {
+    const dx=b.x-o.x, dy=b.y-o.y;
+    const d=Math.hypot(dx,dy)||0.001;
+    const clear=o.r+BOT_R+22;
+    if(d<clear){ const s=(clear-d)/clear; fx+=(dx/d)*s*9; fy+=(dy/d)*s*9; }
+  }
+
+  // Wall repulsion
+  const m=55;
+  if(b.x<m)   fx+=(m-b.x)/m*5;
+  if(b.x>W-m) fx-=(b.x-(W-m))/m*5;
+  if(b.y<m)   fy+=(m-b.y)/m*5;
+  if(b.y>H-m) fy-=(b.y-(H-m))/m*5;
+
+  // Wander
+  fx+=(Math.random()-.5)*0.12;
+  fy+=(Math.random()-.5)*0.12;
+
+  return {fx,fy};
+}
+
+// ── ToF RAY ──────────────────────────────────────────────────────────
+function castRay(b) {
+  const angle=Math.atan2(b.vy,b.vx);
+  for(let d=BOT_R+4; d<=TOF_RANGE; d+=4) {
+    const rx=b.x+Math.cos(angle)*d, ry=b.y+Math.sin(angle)*d;
+    for(let i=0;i<obstacles.length;i++){
+      const o=obstacles[i];
+      if(Math.hypot(rx-o.x,ry-o.y)<o.r){
+        if(!o.detected){
+          o.detected=true; detObs.add(i);
+          document.getElementById('tDet').textContent=detObs.size;
+          logEntry(`Obstacle @(${(o.x/W*10).toFixed(1)}m,${(o.y/H*10).toFixed(1)}m) — dist ${(d/W*10*100).toFixed(0)}cm`,`le info`,`R${b.id+1}`);
+        }
+        return d;
+      }
+    }
+    if(rx<4||rx>W-4||ry<4||ry>H-4) return d;
+  }
+  return TOF_RANGE;
+}
+
+// ── UPDATE ───────────────────────────────────────────────────────────
+function update() {
+  robots.forEach(b=>{
+    if(!b.alive) return;
+    const {fx,fy}=computeForce(b);
+    b.vx+=fx*0.016; b.vy+=fy*0.016;
+    const spd=Math.hypot(b.vx,b.vy);
+    if(spd>BOT_SPEED){b.vx=b.vx/spd*BOT_SPEED; b.vy=b.vy/spd*BOT_SPEED;}
+    if(spd<0.35){b.vx*=1.6; b.vy*=1.6;}
+    const px=b.x, py=b.y;
+    b.x+=b.vx; b.y+=b.vy;
+    b.x=Math.max(8,Math.min(W-8,b.x));
+    b.y=Math.max(8,Math.min(H-8,b.y));
+    b.dist+=Math.hypot(b.x-px,b.y-py);
+    b.tof=castRay(b);
+    // Mark map
+    const gx=Math.floor(b.x/CELL), gy=Math.floor(b.y/CELL);
+    for(let dx=-1;dx<=1;dx++) for(let dy=-1;dy<=1;dy++){
+      const nx=gx+dx,ny=gy+dy;
+      if(nx>=0&&nx<gridW&&ny>=0&&ny<gridH) mapGrid[ny*gridW+nx]=true;
+    }
+  });
+
+  // Reformation timer
+  if(reforming){
+    reformTimer-=1/60;
+    if(reformTimer<=0){ reforming=false; }
+  }
+}
+
+// ── DRAW ARENA ───────────────────────────────────────────────────────
+function drawArena() {
+  aC.clearRect(0,0,W,H);
+
+  // Grid
+  aC.strokeStyle='#0c0c1e'; aC.lineWidth=1;
+  for(let x=0;x<W;x+=40){aC.beginPath();aC.moveTo(x,0);aC.lineTo(x,H);aC.stroke();}
+  for(let y=0;y<H;y+=40){aC.beginPath();aC.moveTo(0,y);aC.lineTo(W,y);aC.stroke();}
+
+  // Ruler
+  aC.fillStyle='#0f0f22';
+  aC.fillRect(0,H-14,W,14); aC.fillRect(0,0,14,H);
+  for(let x=0;x<W;x+=80){
+    aC.fillStyle='#252540'; aC.font='7px Share Tech Mono';
+    aC.fillText((x/W*10).toFixed(1)+'m',x+2,H-3);
+  }
+  for(let y=0;y<H;y+=80){
+    aC.fillStyle='#252540'; aC.font='7px Share Tech Mono';
+    aC.fillText((y/H*10).toFixed(1),2,y+9);
+  }
+
+  // Obstacles
+  obstacles.forEach(o=>{
+    if(o.detected){
+      const g=aC.createRadialGradient(o.x,o.y,o.r,o.x,o.y,o.r+14);
+      g.addColorStop(0,'#ff444420'); g.addColorStop(1,'#ff444400');
+      aC.fillStyle=g; aC.beginPath(); aC.arc(o.x,o.y,o.r+14,0,Math.PI*2); aC.fill();
+    }
+    aC.fillStyle   = o.detected?'#2a1010':'#141424';
+    aC.strokeStyle = o.detected?'#ff4444':'#222232';
+    aC.lineWidth   = o.detected?1.5:1;
+    aC.beginPath(); aC.arc(o.x,o.y,o.r,0,Math.PI*2); aC.fill(); aC.stroke();
+    if(o.detected){
+      aC.fillStyle='#ff4444'; aC.font='bold 8px Share Tech Mono';
+      aC.fillText('OBS',o.x-9,o.y+3);
+    }
+  });
+
+  // MIN DISTANCE rings (show separation enforced)
+  robots.forEach(b=>{
+    if(!b.alive) return;
+    aC.beginPath(); aC.arc(b.x,b.y,MIN_DIST/2,0,Math.PI*2);
+    aC.strokeStyle=COLORS[b.id]+'15'; aC.lineWidth=1; aC.setLineDash([2,6]);
+    aC.stroke(); aC.setLineDash([]);
+  });
+
+  // Coordination lines between alive bots
+  const alive=robots.filter(r=>r.alive);
+  for(let i=0;i<alive.length;i++) for(let j=i+1;j<alive.length;j++){
+    const a=alive[i],b=alive[j];
+    const d=Math.hypot(b.x-a.x,b.y-a.y);
+    const alpha=Math.max(0,(1-d/(MAX_DIST*1.3))*0.5);
+    if(alpha>0.05){
+      const midX=(a.x+b.x)/2, midY=(a.y+b.y)/2;
+      const grad=aC.createLinearGradient(a.x,a.y,b.x,b.y);
+      grad.addColorStop(0,COLORS[a.id]+Math.floor(alpha*255).toString(16).padStart(2,'0'));
+      grad.addColorStop(1,COLORS[b.id]+Math.floor(alpha*255).toString(16).padStart(2,'0'));
+      aC.beginPath(); aC.moveTo(a.x,a.y); aC.lineTo(b.x,b.y);
+      aC.strokeStyle=grad; aC.lineWidth=1.5;
+      aC.setLineDash([3,7]); aC.stroke(); aC.setLineDash([]);
+      // Distance label on line
+      aC.fillStyle='#33334a'; aC.font='7px Share Tech Mono';
+      aC.fillText(d.toFixed(0)+'px',midX-10,midY-4);
+    }
+  }
+
+  // Formation target markers
+  if(reforming){
+    robots.forEach(b=>{
+      if(!b.alive||!b.reformTarget) return;
+      aC.beginPath(); aC.arc(b.reformTarget.x,b.reformTarget.y,5,0,Math.PI*2);
+      aC.strokeStyle=COLORS[b.id]+'88'; aC.lineWidth=1.5; aC.stroke();
+      aC.beginPath();
+      aC.moveTo(b.x,b.y); aC.lineTo(b.reformTarget.x,b.reformTarget.y);
+      aC.strokeStyle=COLORS[b.id]+'33'; aC.lineWidth=1; aC.setLineDash([2,5]); aC.stroke(); aC.setLineDash([]);
+    });
+  }
+
+  // ToF cones + bots
+  robots.forEach(b=>{
+    const color=b.alive?COLORS[b.id]:'#2a2a3a';
+    if(!b.alive){
+      // Dead cross
+      aC.save(); aC.translate(b.x,b.y);
+      aC.strokeStyle='#ff4444'; aC.lineWidth=2.5;
+      aC.beginPath(); aC.moveTo(-9,-9); aC.lineTo(9,9); aC.stroke();
+      aC.beginPath(); aC.moveTo(9,-9);  aC.lineTo(-9,9); aC.stroke();
+      aC.restore();
+      aC.font='8px Share Tech Mono'; aC.fillStyle='#ff4444';
+      aC.fillText(`R${b.id+1} DEAD`,b.x-16,b.y+22);
+      return;
+    }
+
+    // ToF beam
+    const angle=Math.atan2(b.vy,b.vx);
+    const spread=0.18;
+    const g=aC.createLinearGradient(b.x,b.y,b.x+Math.cos(angle)*b.tof,b.y+Math.sin(angle)*b.tof);
+    g.addColorStop(0,color+'50'); g.addColorStop(1,color+'00');
+    aC.beginPath(); aC.moveTo(b.x,b.y); aC.arc(b.x,b.y,b.tof,angle-spread,angle+spread); aC.closePath();
+    aC.fillStyle=g; aC.fill();
+    if(b.tof<TOF_RANGE-8){
+      const ex=b.x+Math.cos(angle)*b.tof, ey=b.y+Math.sin(angle)*b.tof;
+      aC.beginPath(); aC.arc(ex,ey,4,0,Math.PI*2);
+      aC.fillStyle=color; aC.fill();
+    }
+
+    // Glow
+    const grd=aC.createRadialGradient(b.x,b.y,0,b.x,b.y,18);
+    grd.addColorStop(0,color+'44'); grd.addColorStop(1,color+'00');
+    aC.fillStyle=grd; aC.beginPath(); aC.arc(b.x,b.y,18,0,Math.PI*2); aC.fill();
+
+    // Body arrow
+    aC.save(); aC.translate(b.x,b.y); aC.rotate(angle);
+    aC.fillStyle=color; aC.shadowColor=color; aC.shadowBlur=8;
+    aC.beginPath(); aC.moveTo(11,0); aC.lineTo(-8,6); aC.lineTo(-4,0); aC.lineTo(-8,-6); aC.closePath();
+    aC.fill(); aC.shadowBlur=0;
+    // White nose
+    aC.fillStyle='#fff'; aC.beginPath(); aC.arc(8,0,2,0,Math.PI*2); aC.fill();
+    aC.restore();
+
+    // Label
+    aC.font='bold 8px Share Tech Mono'; aC.fillStyle=color;
+    aC.fillText(`R${b.id+1}`,b.x-7,b.y-16);
+  });
+}
+
+// ── DRAW MAP ─────────────────────────────────────────────────────────
+function drawMap() {
+  const mW=mapC.width, mH=mapC.height;
+  mC.clearRect(0,0,mW,mH);
+  mC.fillStyle='#05050e'; mC.fillRect(0,0,mW,mH);
+  mC.strokeStyle='#0c0c1e'; mC.lineWidth=1;
+  for(let x=0;x<mW;x+=40){mC.beginPath();mC.moveTo(x,0);mC.lineTo(x,mH);mC.stroke();}
+  for(let y=0;y<mH;y+=40){mC.beginPath();mC.moveTo(0,y);mC.lineTo(mH,y);mC.stroke();}
+
+  if(!mapGrid) return;
+  const sx=mW/W, sy=mH/H;
+  let explored=0;
+  for(let gy=0;gy<gridH;gy++) for(let gx=0;gx<gridW;gx++){
+    if(mapGrid[gy*gridW+gx]){
+      explored++;
+      mC.fillStyle='#00e5ff09';
+      mC.fillRect(gx*CELL*sx,gy*CELL*sy,CELL*sx+1,CELL*sy+1);
+    }
+  }
+  const pct=((explored/(gridW*gridH))*100).toFixed(1);
+  document.getElementById('tCov').textContent=pct+'%';
+  document.getElementById('covLabel').textContent='Coverage: '+pct+'%';
+  document.getElementById('covFill').style.width=pct+'%';
+
+  // Obstacles on map
+  obstacles.forEach(o=>{
+    if(!o.detected) return;
+    const ox=o.x*sx, oy=o.y*sy, or2=o.r*Math.min(sx,sy);
+    mC.fillStyle='#ff444430'; mC.strokeStyle='#ff4444'; mC.lineWidth=1.5;
+    mC.beginPath(); mC.arc(ox,oy,or2,0,Math.PI*2); mC.fill(); mC.stroke();
+    mC.fillStyle='#ff4444'; mC.font='6px Share Tech Mono';
+    mC.fillText('OBS',ox-8,oy+2);
+  });
+
+  // Robot dots on map
+  robots.forEach(b=>{
+    const bx=b.x*sx, by=b.y*sy;
+    mC.fillStyle=b.alive?COLORS[b.id]:'#ff444488';
+    mC.beginPath(); mC.arc(bx,by,b.alive?4:3,0,Math.PI*2); mC.fill();
+    if(b.alive){
+      mC.beginPath(); mC.arc(bx,by,9,0,Math.PI*2);
+      mC.strokeStyle=COLORS[b.id]+'44'; mC.lineWidth=1; mC.stroke();
+    }
+    mC.font='bold 8px Share Tech Mono'; mC.fillStyle=b.alive?COLORS[b.id]:'#ff4444';
+    mC.fillText(`R${b.id+1}`,bx+5,by-4);
+  });
+
+  // Legend
+  mC.fillStyle='#0a0a18'; mC.fillRect(3,3,92,58);
+  mC.strokeStyle='#1a1a2e'; mC.lineWidth=1; mC.strokeRect(3,3,92,58);
+  mC.font='7px Share Tech Mono';
+  mC.fillStyle='#00e5ff09'; mC.fillRect(8,10,10,8);
+  mC.fillStyle='#444'; mC.fillText('EXPLORED',22,17);
+  mC.fillStyle='#ff444430'; mC.fillRect(8,22,10,8);
+  mC.strokeStyle='#ff4444'; mC.strokeRect(8,22,10,8);
+  mC.fillStyle='#444'; mC.fillText('OBSTACLE',22,30);
+  COLORS.forEach((c,i)=>{
+    mC.fillStyle=c; mC.beginPath(); mC.arc(13,41+i*8,3,0,Math.PI*2); mC.fill();
+    mC.fillStyle='#444'; mC.fillText(`ROBOT ${i+1}`,22,43+i*8);
+  });
+}
+
+// ── ALERT SYSTEM ─────────────────────────────────────────────────────
+function updateAlertSystem() {
+  const alive = robots.filter(r=>r.alive).length;
+  const dead  = 3 - alive;
+
+  if(dead===3 && alertState!=='danger') {
+    alertState='danger';
+    showAlert('danger',
+      '🚨','DANGER — DO NOT ENTER',
+      'ALL 3 ROBOTS HAVE BEEN DESTROYED\nComplete loss of swarm. Zone is unmapped and hazardous.',
+      'HUMAN ENTRY STRICTLY PROHIBITED · AWAIT RESCUE TEAM'
+    );
+    document.getElementById('statusBanner').textContent='🚨 DANGER — COMPLETE SWARM FAILURE — HUMAN ENTRY PROHIBITED';
+    document.getElementById('statusBanner').className='status-banner danger-mode';
+    logEntry('🚨 DANGER: ALL ROBOTS OFFLINE — HUMAN ENTRY FORBIDDEN','le danger','SYS');
+    logEntry('Zone classified as HAZARDOUS — unmapped region ahead','le danger','SYS');
+  } else if(dead===2 && alertState!=='warning') {
+    alertState='warning';
+    showAlert('warning',
+      '⚠','WARNING — REDUCED COVERAGE',
+      '2 OF 3 ROBOTS OFFLINE\nOnly 1 robot active. Mapping coverage severely limited.',
+      'CAUTION: Do not enter until full swarm is restored'
+    );
+    document.getElementById('statusBanner').textContent='⚠ WARNING — 2 ROBOTS OFFLINE — ZONE PARTIALLY MAPPED';
+    document.getElementById('statusBanner').className='status-banner warn-mode';
+    logEntry('⚠ WARNING: 2 robots offline — critical coverage loss','le warn','SYS');
+    logEntry('Last active robot covering reduced zone','le warn','SYS');
+  } else if(dead===1 && alertState==='none') {
+    document.getElementById('statusBanner').textContent='⚡ FAULT: Robot offline — swarm reorganizing to LINE-2 formation';
+    document.getElementById('statusBanner').className='status-banner warn-mode';
+    setTimeout(()=>{
+      if(alertState==='none')
+        document.getElementById('statusBanner').textContent='■ ALL SYSTEMS NOMINAL';
+        document.getElementById('statusBanner').className='status-banner';
+    },5000);
+  }
+}
+
+function showAlert(type, icon, title, msg, sub) {
+  const overlay = document.getElementById('alertOverlay');
+  const box     = document.getElementById('alertBox');
+  document.getElementById('alertIcon').textContent  = icon;
+  document.getElementById('alertTitle').textContent = title;
+  document.getElementById('alertTitle').className   = `alert-title ${type}`;
+  document.getElementById('alertMsg').textContent   = msg;
+  document.getElementById('alertMsg').className     = `alert-msg ${type}`;
+  document.getElementById('alertSub').textContent   = sub;
+  box.className = `alert-box ${type}`;
+  overlay.classList.add('show');
+  if(type==='warning') setTimeout(()=>overlay.classList.remove('show'), 6000);
+  // danger stays until reset
+}
+
+// ── HEARTBEATS ────────────────────────────────────────────────────────
+function tickHB() {
+  robots.forEach((b,i)=>{
+    hbHist[i].push(b.alive?1:0);
+    if(hbHist[i].length>22) hbHist[i].shift();
+    const track=document.getElementById(`hb${i}`);
+    track.innerHTML='';
+    hbHist[i].forEach(v=>{
+      const bit=document.createElement('div');
+      bit.className='hb-bit';
+      bit.style.background=v?COLORS[i]:'#111122';
+      bit.style.height=v?'9px':'2px';
+      track.appendChild(bit);
+    });
+  });
+}
+
+// ── TELEMETRY UI ─────────────────────────────────────────────────────
+function updateTelemetry() {
+  robots.forEach((b,i)=>{
+    const sc=10/W;
+    const spd=(Math.hypot(b.vx,b.vy)*100).toFixed(1);
+    const hdg=(((Math.atan2(b.vy,b.vx)*180/Math.PI)+360)%360).toFixed(0);
+    document.getElementById(`r${i}x`).textContent  = (b.x*sc).toFixed(3)+' m';
+    document.getElementById(`r${i}y`).textContent  = (b.y*sc).toFixed(3)+' m';
+    document.getElementById(`r${i}v`).textContent  = b.alive?spd+' cm/s':'0.0';
+    document.getElementById(`r${i}h`).textContent  = b.alive?hdg+'°':'—';
+    document.getElementById(`r${i}d`).textContent  = (b.dist*sc).toFixed(3)+' m';
+    document.getElementById(`r${i}tof`).textContent= b.alive
+      ?(b.tof<TOF_RANGE-8?(b.tof/W*10*100).toFixed(1)+' cm ⚠':'>'+TOF_RANGE+'px CLEAR')
+      :'OFFLINE';
+
+    const badge=document.getElementById(`badge${i}`);
+    const card =document.getElementById(`card${i}`);
+    if(!b.alive){
+      badge.textContent='✗ FAULT'; badge.className='tc-badge badge-fault';
+      card.classList.add('tc-dead');
+    } else if(reforming){
+      badge.textContent='⟳ REFORMING'; badge.className='tc-badge badge-reform';
+      card.classList.remove('tc-dead');
+    } else if(b.tof<TOF_RANGE-8){
+      badge.textContent='⚠ OBS NEAR'; badge.className='tc-badge badge-obs';
+      card.classList.remove('tc-dead');
+    } else {
+      badge.textContent='● ACTIVE'; badge.className='tc-badge badge-active';
+      card.classList.remove('tc-dead');
+    }
+  });
+
+  const alive=robots.filter(r=>r.alive).length;
+  document.getElementById('tActive').textContent=alive;
+  const mm=Math.floor(simT/60).toString().padStart(2,'0');
+  const ss=Math.floor(simT%60).toString().padStart(2,'0');
+  document.getElementById('tMission').textContent=mm+':'+ss;
+}
+
+// ── LOG ──────────────────────────────────────────────────────────────
+function logEntry(msg,cls,prefix='SYS') {
+  const box=document.getElementById('obsLog');
+  const el=document.createElement('div');
+  el.className=cls; el.textContent=`[${simT.toFixed(1)}s] ${prefix}: ${msg}`;
+  box.appendChild(el); box.scrollTop=box.scrollHeight;
+  if(box.children.length>80) box.removeChild(box.firstChild);
+}
+
+// ── KILL ROBOT ───────────────────────────────────────────────────────
+function killRobot(id) {
+  if(!robots[id]||!robots[id].alive) return;
+  robots[id].alive=false; robots[id].vx=0; robots[id].vy=0;
+  const alive=robots.filter(r=>r.alive).length;
+  logEntry(`Bot ${id+1} offline — ${alive} bot(s) remaining`,'le fault',`R${id+1}`);
+
+  if(alive>0){
+    reforming=true; reformTimer=4;
+    computeFormationTargets();
+    logEntry(`Formation readjusting → ${alive===2?'LINE-2':'SOLO'} mode`,'le reform','SYS');
+    setTimeout(()=> logEntry(`New formation locked — minimal distance enforced`,'le ok','SYS'),2000);
+  }
+  updateAlertSystem();
+}
+
+// ── MAIN LOOP ────────────────────────────────────────────────────────
+function loop(ts) {
+  if(!running) return;
+  const dt=Math.min((ts-lastTs)/1000,0.05);
+  lastTs=ts; simT+=dt;
+  update();
+  hbTick+=dt;
+  if(hbTick>0.2){ hbTick=0; tickHB(); }
+  updateTelemetry();
+  drawArena();
+  drawMap();
+  animId=requestAnimationFrame(loop);
+}
+
+// ── CONTROLS ─────────────────────────────────────────────────────────
+function newMap() {
+  stopSim();
+  resize();
+  mapGrid=new Uint8Array(gridW*gridH);
+  detObs.clear(); alertState='none';
+  generateObstacles(); spawnRobots();
+  hbHist=[[],[],[]]; simT=0; reforming=false;
+  // Reset UI
+  for(let i=0;i<3;i++){
+    ['x','y','v','h','d','tof'].forEach(f=>{
+      const el=document.getElementById(`r${i}${f}`);
+      if(el) el.textContent='—';
+    });
+    document.getElementById(`badge${i}`).textContent='● ACTIVE';
+    document.getElementById(`badge${i}`).className='tc-badge badge-active';
+    document.getElementById(`card${i}`).classList.remove('tc-dead');
+  }
+  document.getElementById('tDet').textContent='0';
+  document.getElementById('tCov').textContent='0%';
+  document.getElementById('covFill').style.width='0%';
+  document.getElementById('tActive').textContent='3';
+  document.getElementById('tMission').textContent='00:00';
+  document.getElementById('tForm').textContent='TRIANGLE';
+  document.getElementById('alertOverlay').classList.remove('show');
+  document.getElementById('statusBanner').textContent='■ ALL SYSTEMS NOMINAL';
+  document.getElementById('statusBanner').className='status-banner';
+  document.getElementById('obsLog').innerHTML='';
+  drawArena(); drawMap();
+  logEntry(`New map: ${obstacles.length} obstacles generated`,'le ok');
+  logEntry('3 robots in TRIANGLE formation — min distance '+MIN_DIST+'px','le info');
+  logEntry('Keys [1][2][3] to kill robots','le ok');
+}
+
+function startSim() {
+  if(running) return;
+  running=true;
+  document.getElementById('btnStart').disabled=true;
+  document.getElementById('btnStop').disabled=false;
+  logEntry('Mission started — autonomous mapping active','le ok');
+  logEntry('Formation control: MIN_DIST='+MIN_DIST+'px enforced','le info');
+  lastTs=performance.now();
+  animId=requestAnimationFrame(loop);
+}
+
+function stopSim() {
+  running=false;
+  if(animId){cancelAnimationFrame(animId);animId=null;}
+  document.getElementById('btnStart').disabled=false;
+  document.getElementById('btnStop').disabled=true;
+}
+
+document.addEventListener('keydown',e=>{
+  const i=parseInt(e.key)-1;
+  if(i>=0&&i<3&&running) killRobot(i);
+});
+
+window.addEventListener('resize',()=>{resize();if(!running){drawArena();drawMap();}});
+resize(); newMap();
+</script>
+</body>
+</html>

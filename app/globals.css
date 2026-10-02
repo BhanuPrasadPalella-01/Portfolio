@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Warm paper, ink, one bronze accent. 3D materials in components/room mirror these. */
+/* Warm paper, ink, one bronze accent — inverted for night. 3D lighting in components/room follows the theme. */
 :root {
   --background: #f4f0e8;
   --surface: #ece6da;
@@ -9,6 +9,21 @@
   --ink-soft: #5a5e67;
   --accent: #8a5c2c;
   --accent-soft: #e6cfae;
+  /* Fixed regardless of theme: footer, curtain, mobile menu. */
+  --night: #0e0f12;
+  --paper: #f4f0e8;
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --background: #101114;
+  --surface: #191a1f;
+  --surface-border: #2a2b31;
+  --ink: #ede7db;
+  --ink-soft: #9b9ca5;
+  --accent: #d39b5f;
+  --accent-soft: #6b4a28;
+  color-scheme: dark;
 }
 
 @theme inline {
@@ -19,6 +34,8 @@
   --color-ink-soft: var(--ink-soft);
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
+  --color-night: var(--night);
+  --color-paper: var(--paper);
   --font-display: var(--font-fraunces);
   --font-sans: var(--font-inter);
   --font-mono: var(--font-jetbrains-mono);
@@ -65,6 +82,26 @@ html.custom-cursor * {
   opacity: 0.06;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
   animation: grain 1.2s steps(6) infinite;
+}
+
+:root[data-theme="dark"] .grain {
+  opacity: 0.035;
+}
+
+/* Theme switch: the new theme grows out of the toggle as a circle (View Transitions API). */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-new(root) {
+  clip-path: circle(0 at var(--vt-x, 100%) var(--vt-y, 0));
+  animation: theme-reveal 0.9s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+@keyframes theme-reveal {
+  to {
+    clip-path: circle(var(--vt-r, 150vmax) at var(--vt-x, 100%) var(--vt-y, 0));
+  }
 }
 
 @keyframes grain {

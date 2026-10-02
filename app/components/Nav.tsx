@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import TransitionLink from "./transition/TransitionLink";
 import Magnetic from "./ui/Magnetic";
 import Scramble from "./ui/Scramble";
+import Logo from "./Logo";
+import ThemeToggle from "./ThemeToggle";
 import { navLinks, site } from "../lib/site";
 import { gsap } from "../lib/gsap";
 
@@ -73,9 +75,7 @@ export default function Nav() {
       >
         <div className="mx-auto flex w-full max-w-[1400px] items-center justify-between px-6 py-5 sm:px-10">
           <TransitionLink href="/" className="group flex items-center gap-3" aria-label="Home">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-ink font-display text-sm text-background italic transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:rotate-[360deg]">
-              bp
-            </span>
+            <Logo className="h-9 w-9 transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:-rotate-[8deg] group-hover:scale-110" />
             <span className="hidden font-display text-lg leading-none text-ink md:block">
               {site.short}
               <span className="text-accent">.</span>
@@ -96,11 +96,13 @@ export default function Nav() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-5">
+          <div className="flex items-center gap-3 sm:gap-4">
             <span className="hidden font-mono text-[11px] tracking-[0.15em] text-ink-soft lg:block">
               COIMBATORE · {time} IST
             </span>
-            <Magnetic className="hidden md:inline-block">
+            <ThemeToggle />
+            <div className="hidden md:block">
+            <Magnetic>
               <TransitionLink
                 href="/contact"
                 className="group relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-background"
@@ -112,15 +114,16 @@ export default function Nav() {
                 </span>
               </TransitionLink>
             </Magnetic>
+            </div>
             <button
               type="button"
               onClick={() => setOpen((v) => !v)}
               aria-expanded={open}
               aria-label={open ? "Close menu" : "Open menu"}
-              className="relative z-[70] flex h-11 w-11 flex-col items-center justify-center gap-1.5 rounded-full bg-ink md:hidden"
+              className={`relative z-[70] flex h-11 w-11 flex-col items-center justify-center gap-1.5 rounded-full md:hidden ${open ? "bg-paper" : "bg-ink"}`}
             >
-              <span className={`h-px w-5 bg-background transition-transform duration-500 ${open ? "translate-y-[3.5px] rotate-45" : ""}`} />
-              <span className={`h-px w-5 bg-background transition-transform duration-500 ${open ? "-translate-y-[3.5px] -rotate-45" : ""}`} />
+              <span className={`h-px w-5 transition-transform duration-500 ${open ? "translate-y-[3.5px] rotate-45 bg-night" : "bg-background"}`} />
+              <span className={`h-px w-5 transition-transform duration-500 ${open ? "-translate-y-[3.5px] -rotate-45 bg-night" : "bg-background"}`} />
             </button>
           </div>
         </div>
@@ -128,7 +131,7 @@ export default function Nav() {
 
       <div
         ref={menu}
-        className="invisible fixed inset-0 z-[65] flex flex-col justify-between bg-ink px-6 pt-28 pb-10 md:hidden"
+        className="invisible fixed inset-0 z-[65] flex flex-col justify-between bg-night px-6 pt-28 pb-10 md:hidden"
         style={{ clipPath: "circle(0% at 100% 0%)" }}
       >
         <ul className="space-y-2">
@@ -138,18 +141,18 @@ export default function Nav() {
                 <TransitionLink
                   href={l.href}
                   className={`flex items-baseline gap-4 font-display text-6xl ${
-                    isActive(l.href) ? "text-accent italic" : "text-background"
+                    isActive(l.href) ? "text-accent italic" : "text-paper"
                   }`}
                 >
-                  <span className="font-mono text-xs text-background/50">0{i + 1}</span>
+                  <span className="font-mono text-xs text-paper/50">0{i + 1}</span>
                   {l.label}
                 </TransitionLink>
               </div>
             </li>
           ))}
         </ul>
-        <div className="space-y-2 font-mono text-xs text-background/60">
-          <a href={`mailto:${site.email}`} className="block text-background">
+        <div className="space-y-2 font-mono text-xs text-paper/60">
+          <a href={`mailto:${site.email}`} className="block text-paper">
             {site.email}
           </a>
           <p>COIMBATORE · {time} IST</p>

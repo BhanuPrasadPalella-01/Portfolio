@@ -2,10 +2,9 @@
 
 import { useEffect, useState } from "react";
 
-const STOPS = ["Intro", "VaultSphere", "RescueBot", "GNN-RL", "Complaints", "Certificates", "Fin"];
-
 // Fixed rail on the right showing where you are in the room tour.
-export default function TourProgress() {
+export default function TourProgress({ stops }: { stops: string[] }) {
+  const STOPS = stops;
   const [active, setActive] = useState(0);
   const [visible, setVisible] = useState(true);
 
@@ -21,7 +20,7 @@ export default function TourProgress() {
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  }, [STOPS.length]);
 
   return (
     <nav

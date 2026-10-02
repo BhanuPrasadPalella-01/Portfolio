@@ -7,6 +7,7 @@ import SmoothScroll from "./components/SmoothScroll";
 import Nav from "./components/Nav";
 import Footer from "./components/Footer";
 import Cursor from "./components/Cursor";
+import { themeInitScript } from "./lib/theme-script";
 
 const fraunces = Fraunces({
   variable: "--font-fraunces",
@@ -39,7 +40,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       className={`${fraunces.variable} ${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className="flex min-h-full flex-col">
         <TransitionProvider>
           <Preloader />

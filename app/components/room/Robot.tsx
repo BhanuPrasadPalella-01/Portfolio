@@ -14,7 +14,8 @@ const LINES = [
   "6 states, 0 bugs. Probably.",
   "Obstacle class: SMALL. That's you.",
   "Try clicking the laptop →",
-  "Radar says: hire this guy.",
+  "Swarm arena says hi. Bots unite.",
+  "Radar says: hire Bhanu.",
 ];
 
 const damp = (from: number, to: number, rate: number, dt: number) =>
@@ -204,7 +205,7 @@ export default function Robot() {
       <group ref={body} onPointerOver={over} onPointerOut={out} onClick={poke}>
         {/* Chassis */}
         <RoundedBox args={[0.84, 0.3, 1.0]} radius={0.08} position={[0, 0.32, 0]} castShadow>
-          <meshStandardMaterial color={C.paper} roughness={0.35} />
+          <meshPhysicalMaterial color={C.paper} roughness={0.3} clearcoat={0.8} clearcoatRoughness={0.15} />
         </RoundedBox>
         <mesh position={[0, 0.32, 0]}>
           <boxGeometry args={[0.86, 0.05, 0.9]} />
@@ -249,7 +250,7 @@ export default function Robot() {
         {/* Head */}
         <group ref={head} position={[0, 0.78, -0.05]}>
           <RoundedBox args={[0.6, 0.36, 0.42]} radius={0.09} castShadow>
-            <meshStandardMaterial color={C.paper} roughness={0.35} />
+            <meshPhysicalMaterial color={C.paper} roughness={0.3} clearcoat={0.8} clearcoatRoughness={0.15} />
           </RoundedBox>
           <RoundedBox args={[0.48, 0.22, 0.04]} radius={0.05} position={[0, 0, 0.2]}>
             <meshStandardMaterial color={C.ink} roughness={0.2} metalness={0.3} />

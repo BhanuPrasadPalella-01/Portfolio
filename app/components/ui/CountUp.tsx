@@ -26,14 +26,16 @@ export default function CountUp({ value, className = "" }: { value: string; clas
       const decimals = match[1].includes(".") ? match[1].split(".")[1].length : 0;
       const suffix = match[2];
       const counter = { v: 0 };
-      el.textContent = (0).toFixed(decimals) + suffix;
+      const format = (n: number) =>
+        decimals ? n.toFixed(decimals) : Math.round(n).toLocaleString("en-US");
+      el.textContent = format(0) + suffix;
       gsap.to(counter, {
         v: target,
         duration: 1.8,
         ease: "expo.out",
         scrollTrigger,
         onUpdate: () => {
-          el.textContent = counter.v.toFixed(decimals) + suffix;
+          el.textContent = format(counter.v) + suffix;
         },
       });
     },

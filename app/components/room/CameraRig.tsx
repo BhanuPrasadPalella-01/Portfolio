@@ -53,6 +53,14 @@ export default function CameraRig({ reduced }: { reduced: boolean }) {
     dt = Math.min(dt, 0.1);
     const target = readTourStage();
     v.stage = v.stage < 0 || reduced ? target : v.stage + (target - v.stage) * (1 - Math.exp(-dt * 3));
+
+    // Small screens stack text and room: intro text is on top (room pushed down),
+    // later cards sit at the bottom (room pushed up).
+    if (!desktop) {
+      const { width: w, height: h } = size;
+      const shift = THREE.MathUtils.lerp(-0.25, 0.16, THREE.MathUtils.clamp(v.stage, 0, 1));
+      camera.setViewOffset(w, h, 0, h * shift, w, h);
+    }
     roomState.stage = v.stage;
 
     const i = Math.min(Math.floor(v.stage), SHOTS.length - 2);

@@ -12,6 +12,8 @@
   /* Fixed regardless of theme: footer, curtain, mobile menu. */
   --night: #0e0f12;
   --paper: #f4f0e8;
+  --logo-tile: #16181d;
+  --logo-mark: #f4f0e8;
   color-scheme: light;
 }
 
@@ -23,6 +25,8 @@
   --ink-soft: #9b9ca5;
   --accent: #d39b5f;
   --accent-soft: #6b4a28;
+  --logo-tile: transparent;
+  --logo-mark: #f4f0e8;
   color-scheme: dark;
 }
 

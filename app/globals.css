@@ -154,3 +154,31 @@ html.custom-cursor * {
     transition-duration: 0.001ms !important;
   }
 }
+
+/* Sound toggle equaliser */
+@keyframes eq {
+  from { height: 3px; }
+  to { height: 14px; }
+}
+
+/* Party mode pill */
+.party-pill {
+  background: linear-gradient(90deg, #ff4d6d, #ffb703, #3ddc97, #4cc9f0, #b5179e, #ff4d6d);
+  background-size: 300% 100%;
+  animation: party-slide 2s linear infinite;
+}
+@keyframes party-slide {
+  to { background-position: 300% 0; }
+}
+
+/* Printing (resume): only the document. */
+@media print {
+  @page { margin: 14mm; }
+  html, body { background: #fff !important; color: #111 !important; }
+  header, footer, .grain, [data-no-print], [aria-label="Room tour"] { display: none !important; }
+  main { padding: 0 !important; }
+  .print-sheet { box-shadow: none !important; border: none !important; padding: 0 !important; opacity: 1 !important; transform: none !important; visibility: visible !important; }
+  .print-sheet, .print-sheet * { color: #16181d !important; border-color: #ddd !important; }
+  .print-sheet h2 { color: #8a5c2c !important; }
+  a { color: inherit !important; text-decoration: none !important; }
+}

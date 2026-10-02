@@ -7,6 +7,9 @@ import SmoothScroll from "./components/SmoothScroll";
 import Nav from "./components/Nav";
 import Footer from "./components/Footer";
 import Cursor from "./components/Cursor";
+import CommandPalette from "./components/CommandPalette";
+import EasterEggs from "./components/EasterEggs";
+import { Analytics } from "@vercel/analytics/next";
 import { themeInitScript } from "./lib/theme-script";
 
 const fraunces = Fraunces({
@@ -52,7 +55,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <Nav />
           <main className="relative flex-1">{children}</main>
           <Footer />
+          <CommandPalette />
+          <EasterEggs />
         </TransitionProvider>
+        <Analytics />
         <Cursor />
         <div aria-hidden="true" className="grain" />
       </body>

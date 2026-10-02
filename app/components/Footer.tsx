@@ -53,7 +53,7 @@ export default function Footer() {
         <div>
           <p className="font-mono text-[11px] tracking-[0.25em] text-paper/50 uppercase">Menu</p>
           <ul className="mt-4 space-y-2">
-            {navLinks.map((l) => (
+            {[...navLinks, { href: "/resume", label: "Resume" }].map((l) => (
               <li key={l.href}>
                 <TransitionLink href={l.href} className="text-paper/80 transition-colors hover:text-[#e6cfae]">
                   <Scramble text={l.label} />

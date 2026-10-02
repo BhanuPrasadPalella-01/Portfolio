@@ -7,6 +7,8 @@ import * as THREE from "three";
 import { C, ROBOT_SPOTS, roomState } from "./config";
 import { setCursor } from "../../lib/cursor";
 import { onReady } from "../../lib/ready";
+import { on, isParty } from "../../lib/events";
+import { sfx } from "../../lib/sound";
 
 const LINES = [
   "Human detected. Hi! 👋",
@@ -28,9 +30,12 @@ function dampAngle(from: number, to: number, rate: number, dt: number) {
   return from + diff * (1 - Math.exp(-rate * dt));
 }
 
+const LOST_LINES = ["Hmm… this page isn't on my map.", "Scanning for a way home…", "404: route not found. Rerouting!"];
+
 // RescueBot: drives between spots as you scroll, tracks the cursor with its head,
-// blinks, and does a radar scan + quip when clicked.
-export default function Robot() {
+// blinks, and does a radar scan + quip when clicked. Also waves, dances in party
+// mode, and in "lost" mode (404 page) wanders with a flashlight.
+export default function Robot({ mode = "room" }: { mode?: "room" | "lost" }) {
   const root = useRef<THREE.Group>(null);
   const body = useRef<THREE.Group>(null);
   const head = useRef<THREE.Group>(null);
@@ -44,6 +49,12 @@ export default function Robot() {
   const pokeRequested = useRef(false);
   const lineIndex = useRef(0);
   const lineTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const waveRequested = useRef(false);
+  const wavedAt = useRef(-10);
+  const party = useRef(false);
+  const wander = useRef<[number, number]>([0, 0]);
+  const flashTarget = useRef<THREE.Object3D>(null);
+  const flash = useRef<THREE.SpotLight>(null);
 
   const scratch = useMemo(
     () => ({
@@ -88,14 +99,29 @@ export default function Robot() {
   useEffect(() => {
     let t: ReturnType<typeof setTimeout>;
     const off = onReady(() => {
-      t = setTimeout(() => say("Hi, I'm RescueBot. Poke me!", 3800), 900);
+      t = setTimeout(
+        () => say(mode === "lost" ? "Lost? Me too. Let's find home." : "Hi, I'm RescueBot. Poke me!", 3800),
+        900
+      );
     });
+    party.current = isParty();
+    const offSay = on("robot-say", (text) => say(text, 4200));
+    const offWave = on("robot-wave", () => (waveRequested.current = true));
+    const offParty = on("party", (v) => (party.current = v));
     return () => {
       off();
+      offSay();
+      offWave();
+      offParty();
       clearTimeout(t);
       if (lineTimer.current) clearTimeout(lineTimer.current);
       if (roomState.bubble) roomState.bubble.dataset.show = "false";
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (flash.current && flashTarget.current) flash.current.target = flashTarget.current;
   }, []);
 
   useFrame((state, dt) => {
@@ -107,13 +133,27 @@ export default function Robot() {
       pokeRequested.current = false;
       pokedAt.current = t;
     }
+    if (waveRequested.current) {
+      waveRequested.current = false;
+      wavedAt.current = t;
+    }
 
     // Drive toward this stage's parking spot.
-    const spot = ROBOT_SPOTS[Math.min(ROBOT_SPOTS.length - 1, Math.max(0, Math.round(roomState.stage)))];
+    let spot = ROBOT_SPOTS[Math.min(ROBOT_SPOTS.length - 1, Math.max(0, Math.round(roomState.stage)))];
+    if (mode === "lost") {
+      const w = wander.current;
+      if (Math.hypot(w[0] - r.position.x, w[1] - r.position.z) < 0.05) {
+        const a = Math.random() * Math.PI * 2;
+        const rad = 0.6 + Math.random() * 2;
+        wander.current = [Math.cos(a) * rad, Math.sin(a) * rad];
+        if (Math.random() < 0.35) say(LOST_LINES[Math.floor(Math.random() * LOST_LINES.length)]);
+      }
+      spot = wander.current;
+    }
     const dx = spot[0] - r.position.x;
     const dz = spot[1] - r.position.z;
     const dist = Math.hypot(dx, dz);
-    const speed = Math.min(dist, 2.2 * dt);
+    const speed = Math.min(dist, (mode === "lost" ? 0.9 : 2.2) * dt);
     const moving = dist > 0.02;
     if (moving) {
       r.position.x += (dx / dist) * speed;
@@ -128,8 +168,14 @@ export default function Robot() {
     // Poke: spin + hop + radar ring.
     const since = t - pokedAt.current;
     const spin = since < 0.9 ? THREE.MathUtils.smootherstep(since / 0.9, 0, 1) * Math.PI * 2 : 0;
-    body.current.rotation.y = spin;
-    const hop = since < 0.6 ? Math.sin((since / 0.6) * Math.PI) * 0.25 : 0;
+    const dance = party.current ? Math.sin(t * 6) * 0.6 : 0;
+    body.current.rotation.y = spin + dance;
+    const waveT = t - wavedAt.current;
+    const waving = waveT < 1.6;
+    body.current.rotation.z = waving ? Math.sin(waveT * 14) * 0.12 * (1 - waveT / 1.6) : 0;
+    let hop = since < 0.6 ? Math.sin((since / 0.6) * Math.PI) * 0.25 : 0;
+    if (party.current) hop = Math.abs(Math.sin(t * 6)) * 0.12;
+    if (waving && waveT < 0.5) hop = Math.sin((waveT / 0.5) * Math.PI) * 0.15;
     const bob = Math.sin(t * (moving ? 14 : 2)) * (moving ? 0.008 : 0.015);
     body.current.position.y = damp(body.current.position.y, (hoveredRef.current ? 0.05 : 0) + bob + hop, 14, dt);
 
@@ -165,7 +211,8 @@ export default function Robot() {
       const sy = hoveredRef.current ? 0.45 : blink;
       eyes.current.children.forEach((e) => (e.scale.y = damp(e.scale.y, sy, 25, dt)));
     }
-    eyeMaterial.emissive.lerp(hoveredRef.current ? scratch.eyeHot : scratch.eyeIdle, 1 - Math.exp(-10 * dt));
+    if (party.current) eyeMaterial.emissive.setHSL((t * 0.4) % 1, 0.9, 0.6);
+    else eyeMaterial.emissive.lerp(hoveredRef.current ? scratch.eyeHot : scratch.eyeIdle, 1 - Math.exp(-10 * dt));
     // Pin the speech bubble above the head in screen space.
     const bubble = roomState.bubble;
     if (bubble) {
@@ -191,7 +238,9 @@ export default function Robot() {
   const poke = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
     pokeRequested.current = true;
-    say(LINES[lineIndex.current++ % LINES.length]);
+    sfx.beep();
+    const lines = mode === "lost" ? LOST_LINES : LINES;
+    say(lines[lineIndex.current++ % lines.length]);
   };
 
   return (
@@ -278,6 +327,12 @@ export default function Robot() {
             <sphereGeometry args={[0.03, 16, 16]} />
             <meshStandardMaterial ref={antenna} color="#ff8a5c" emissive="#ff6a3c" emissiveIntensity={1} toneMapped={false} />
           </mesh>
+          {mode === "lost" && (
+            <>
+              <object3D ref={flashTarget} position={[0, -0.5, 2.5]} />
+              <spotLight ref={flash} position={[0, 0, 0.25]} angle={0.45} penumbra={0.6} intensity={18} distance={7} decay={1.4} color="#ffe6b0" castShadow />
+            </>
+          )}
         </group>
 
       </group>

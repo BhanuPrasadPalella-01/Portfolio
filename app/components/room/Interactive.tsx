@@ -5,6 +5,7 @@ import { useFrame, type ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
 import { setCursor } from "../../lib/cursor";
 import { useNavigate } from "../transition/TransitionProvider";
+import { sfx } from "../../lib/sound";
 
 // Hover lift + labelled cursor + click-to-navigate for objects in the room.
 export default function Interactive({
@@ -42,6 +43,7 @@ export default function Interactive({
   const over = (e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation();
     setHovered(true);
+    sfx.tick();
     setCursor("scene", { variant: "label", label });
   };
   const out = () => {

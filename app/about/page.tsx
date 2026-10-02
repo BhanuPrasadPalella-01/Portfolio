@@ -5,6 +5,8 @@ import Scramble from "../components/ui/Scramble";
 import SplitReveal from "../components/ui/SplitReveal";
 import TiltCard from "../components/ui/TiltCard";
 import SpinningBadge from "./SpinningBadge";
+import Timeline, { type Milestone } from "./Timeline";
+import GitHubActivity from "./GitHubActivity";
 import { certificates, site, stack } from "../lib/site";
 
 export const metadata: Metadata = {
@@ -17,6 +19,18 @@ const facts = [
   { label: "At", value: "Amrita School of Artificial Intelligence, Amrita Vishwa Vidyapeetham" },
   { label: "Focus", value: "Graph learning, reinforcement learning, embedded robotics, applied ML" },
   { label: "Based in", value: "Ettimadai, Coimbatore, Tamil Nadu" },
+];
+
+// Only dated facts from Bhanu's own material; undated work is grouped by academic year.
+const milestones: Milestone[] = [
+  { when: "2025", title: "Started at Amrita", detail: "B.Tech in AI & Data Science (CPS) at the Amrita School of Artificial Intelligence, Coimbatore — class of 2029." },
+  { when: "2025–26", title: "Complaint Intelligence", detail: "First NLP system: TF-IDF + SVM classification, sentiment and urgency scoring in a Streamlit app.", href: "/work/complaint-intelligence" },
+  { when: "2025–26", title: "RescueBot", detail: "Built an ESP32 rescue robot with sensor fusion, a 6-state controller and a live Wi-Fi dashboard.", href: "/work/rescuebot" },
+  { when: "2025–26", title: "VaultSphere goes live", detail: "Shipped a production full-stack platform with AI file analysis and 3 ML models.", href: "/work/vaultsphere" },
+  { when: "May 2026", title: "FractalLab & FlockHunt", detail: "Semester 2: wrote the fractal rendering engine and the core boid behaviour.", href: "/work/fractallab-flockhunt" },
+  { when: "Aug 2026", title: "Deloitte & TATA", detail: "Completed two data-analytics job simulations on Forage.", href: "#certifications" },
+  { when: "2026", title: "Protein Structure AI", detail: "Attention-augmented BiLSTM reaches 80.09% Q3; deployed with a live prediction app.", href: "/work/protein-structure" },
+  { when: "Now", title: "Research in progress", detail: "Adaptive PSO for rescue robots, mission-aware SDR scheduling and GNN-RL sensor scheduling.", href: "/work" },
 ];
 
 export default function AboutPage() {
@@ -114,6 +128,8 @@ export default function AboutPage() {
         </div>
       </section>
 
+      <Timeline items={milestones} />
+
       {/* Certifications */}
       <section id="certifications" className="mx-auto mt-40 w-full max-w-[1400px] px-5 sm:px-10">
         <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
@@ -164,6 +180,7 @@ export default function AboutPage() {
           ))}
         </Reveal>
       </section>
+      <GitHubActivity />
     </div>
   );
 }

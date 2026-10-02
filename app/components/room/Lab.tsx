@@ -7,6 +7,8 @@ import * as THREE from "three";
 import Interactive from "./Interactive";
 import { C, roomState } from "./config";
 import { arenaTexture, corkTexture, fractalTexture } from "./surfaces";
+import { setCursor } from "../../lib/cursor";
+import { sfx } from "../../lib/sound";
 
 // Objects for the newer projects: protein helix, swarm arena, PSO corkboard,
 // software-defined radio and the fractal print.
@@ -96,6 +98,12 @@ export function SwarmArena() {
   const lines = useRef<THREE.LineSegments>(null);
   const hovered = useRef(false);
   const t = useRef(0);
+  // Dragging: which bot is held, where it is, and how much it overrides its path.
+  const drag = useRef<{ index: number; x: number; z: number } | null>(null);
+  const held = useRef([0, 0, 0]);
+  const heldPos = useRef<[number, number][]>([[0, 0], [0, 0], [0, 0]]);
+  const plane = useMemo(() => new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.1), []);
+  const hit = useMemo(() => new THREE.Vector3(), []);
 
   const lineGeo = useMemo(() => {
     const g = new THREE.BufferGeometry();
@@ -114,8 +122,14 @@ export function SwarmArena() {
       const z = Math.sin(k * 0.9 + i * 1.7) * 0.62;
       const nx = Math.sin((k + 0.02) * 1.3 + i) * 0.62;
       const nz = Math.sin((k + 0.02) * 0.9 + i * 1.7) * 0.62;
-      g.position.set(x, 0, z);
-      g.rotation.y = Math.atan2(nx - x, nz - z);
+      // Blend between the autonomous path and wherever the visitor dropped it.
+      const isHeld = drag.current?.index === i;
+      if (isHeld) heldPos.current[i] = [drag.current!.x, drag.current!.z];
+      held.current[i] = damp(held.current[i], isHeld ? 1 : 0, isHeld ? 20 : 1.2, dt);
+      const w = held.current[i];
+      const [hx, hz] = heldPos.current[i];
+      g.position.set(x + (hx - x) * w, isHeld ? 0.08 : 0, z + (hz - z) * w);
+      if (!isHeld) g.rotation.y = Math.atan2(nx - x, nz - z);
       pos.push(g.position);
     });
     const ls = lines.current;
@@ -151,7 +165,34 @@ export function SwarmArena() {
               <lineBasicMaterial color="#e3c35a" transparent opacity={0.25} />
             </lineSegments>
             {BOT_COLORS.map((col, i) => (
-              <group key={col} ref={(el) => void (bots.current[i] = el)}>
+              <group
+                key={col}
+                ref={(el) => void (bots.current[i] = el)}
+                onPointerDown={(e) => {
+                  e.stopPropagation();
+                  (e.target as Element).setPointerCapture?.(e.pointerId);
+                  drag.current = { index: i, x: bots.current[i]!.position.x, z: bots.current[i]!.position.z };
+                  sfx.click();
+                }}
+                onPointerMove={(e) => {
+                  if (drag.current?.index !== i) return;
+                  e.stopPropagation();
+                  if (e.ray.intersectPlane(plane, hit)) {
+                    const local = e.eventObject.parent!.worldToLocal(hit.clone());
+                    drag.current.x = THREE.MathUtils.clamp(local.x, -0.8, 0.8);
+                    drag.current.z = THREE.MathUtils.clamp(local.z, -0.8, 0.8);
+                  }
+                }}
+                onPointerUp={(e) => {
+                  e.stopPropagation();
+                  drag.current = null;
+                }}
+                onClick={(e) => e.stopPropagation()}
+                onPointerOver={(e) => {
+                  e.stopPropagation();
+                  setCursor("scene", { variant: "label", label: "Drag me" });
+                }}
+              >
                 <RoundedBox args={[0.14, 0.07, 0.18]} radius={0.025} position={[0, 0.06, 0]} castShadow>
                   <meshPhysicalMaterial color={col} roughness={0.3} clearcoat={0.8} />
                 </RoundedBox>

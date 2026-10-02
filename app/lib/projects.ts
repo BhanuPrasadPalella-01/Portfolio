@@ -123,6 +123,7 @@ const drafts: Draft[] = [
     links: [
       { label: "Try the live app", href: "https://protein-secondary-structure-fronten.vercel.app/" },
       { label: "Front-end code", href: "https://github.com/BhanuPrasadPalella-01/protein-ss-frontend" },
+      { label: "Back-end code", href: "https://github.com/BhanuPrasadPalella-01/protein-ss-backend" },
     ],
     images: [
       {

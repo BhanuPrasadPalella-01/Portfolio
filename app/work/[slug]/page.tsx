@@ -10,6 +10,7 @@ import Scramble from "../../components/ui/Scramble";
 import SplitReveal from "../../components/ui/SplitReveal";
 import TiltCard from "../../components/ui/TiltCard";
 import ParallaxCover from "./ParallaxCover";
+import ProteinPredictor from "./ProteinPredictor";
 import { getProject, projects } from "../../lib/projects";
 
 export function generateStaticParams() {
@@ -126,6 +127,8 @@ export default async function ProjectPage({ params }: PageProps<"/work/[slug]">)
           ))}
         </Reveal>
       </section>
+
+      {project.slug === "protein-structure" && <ProteinPredictor />}
 
       {/* Live demo */}
       {project.demo && (

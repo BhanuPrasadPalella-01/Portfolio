@@ -9,6 +9,7 @@ import CameraRig from "./CameraRig";
 import Lighting from "./Lighting";
 import Room from "./Room";
 import Robot from "./Robot";
+import PartyRig from "./PartyRig";
 import { CertWall, DeskProps, InboxTray, Laptop, Whiteboard } from "./Objects";
 import { Corkboard, FractalPrint, HelixSculpture, SdrRadio, SwarmArena } from "./Lab";
 import { roomState } from "./config";
@@ -90,6 +91,7 @@ export default function RoomCanvas({ reduced, mobile }: { reduced: boolean; mobi
         <CertWall />
       </Suspense>
       <Robot />
+      <PartyRig />
 
       <DropShadow />
       <Effects mobile={mobile} />

@@ -8,6 +8,9 @@ import Interactive from "./Interactive";
 import { C } from "./config";
 import { BOARD_NODES, laptopScreenTexture, whiteboardTexture } from "./textures";
 import { certificates } from "../../lib/site";
+import { setCursor } from "../../lib/cursor";
+import { emit } from "../../lib/events";
+import { sfx } from "../../lib/sound";
 
 const damp = (from: number, to: number, rate: number, dt: number) =>
   from + (to - from) * (1 - Math.exp(-rate * dt));
@@ -212,11 +215,58 @@ export function CertWall() {
   );
 }
 
-export function DeskProps() {
+/** Click the mug: it tips over, rolls, and stands itself back up. */
+function Mug() {
+  const g = useRef<THREE.Group>(null);
+  const knocked = useRef(-10);
+  const request = useRef(false);
+  useFrame((state) => {
+    const t = state.clock.elapsedTime;
+    if (request.current) {
+      request.current = false;
+      if (t - knocked.current > 3.2) knocked.current = t;
+    }
+    const k = t - knocked.current;
+    const m = g.current;
+    if (!m) return;
+    if (k < 0.35) {
+      // Tip over around the bottom edge.
+      const p = THREE.MathUtils.smootherstep(k / 0.35, 0, 1);
+      m.rotation.z = -p * (Math.PI / 2);
+      m.position.set(0.085 * p, 0.085 * p * 0.2, 0);
+    } else if (k < 1.6) {
+      // Roll toward the desk edge and settle with damped oscillation.
+      const p = (k - 0.35) / 1.25;
+      m.rotation.z = -Math.PI / 2;
+      m.rotation.x = Math.sin(p * Math.PI * 3) * 0.25 * (1 - p);
+      m.position.set(0.085 + Math.sin(p * Math.PI * 0.5) * 0.12, 0.002, Math.sin(p * Math.PI * 2) * 0.03 * (1 - p));
+    } else if (k < 2.6) {
+      m.rotation.x = 0;
+    } else if (k < 3.2) {
+      const p = THREE.MathUtils.smootherstep((k - 2.6) / 0.6, 0, 1);
+      m.rotation.z = -(1 - p) * (Math.PI / 2);
+      m.position.set((0.205) * (1 - p), Math.sin(p * Math.PI) * 0.15, 0);
+    } else {
+      m.rotation.set(0, 0, 0);
+      m.position.set(0, 0, 0);
+    }
+  });
   return (
-    <group>
-      {/* Mug */}
-      <group position={[1.35, 1.55, -2.95]}>
+    <group
+      position={[1.35, 1.55, -2.95]}
+      onClick={(e) => {
+        e.stopPropagation();
+        request.current = true;
+        sfx.boop();
+        emit("robot-say", "Oops! Cleanup on desk 3.");
+      }}
+      onPointerOver={(e) => {
+        e.stopPropagation();
+        setCursor("scene", { variant: "label", label: "Knock" });
+      }}
+      onPointerOut={() => setCursor("scene", null)}
+    >
+      <group ref={g}>
         <mesh position={[0, 0.1, 0]} castShadow>
           <cylinderGeometry args={[0.085, 0.08, 0.2, 40]} />
           <meshPhysicalMaterial color={C.ink} roughness={0.25} clearcoat={1} clearcoatRoughness={0.1} />
@@ -226,6 +276,14 @@ export function DeskProps() {
           <meshStandardMaterial color={C.ink} roughness={0.35} />
         </mesh>
       </group>
+    </group>
+  );
+}
+
+export function DeskProps() {
+  return (
+    <group>
+      <Mug />
       {/* Mouse */}
       <mesh position={[1.05, 1.57, -2.8]} scale={[0.07, 0.035, 0.11]} castShadow>
         <sphereGeometry args={[1, 24, 16]} />

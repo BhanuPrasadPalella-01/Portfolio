@@ -4,6 +4,7 @@ import { useEffect, useMemo } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { SHOTS, roomState } from "./config";
+import { onReady } from "../../lib/ready";
 
 function readTourStage() {
   const tour = document.getElementById("tour");
@@ -30,9 +31,23 @@ export default function CameraRig({ reduced }: { reduced: boolean }) {
       stage: -1,
       px: 0,
       py: 0,
+      // Opening swoop: 0 → 1 once the preloader is gone (stays 1 when skipped).
+      intro: 0,
+      introStart: -1,
+      up: new THREE.Vector3(0, 1, 0),
     }),
     []
   );
+
+  useEffect(() => {
+    if (reduced || window.scrollY > 10) {
+      v.intro = 1;
+      return;
+    }
+    return onReady(() => {
+      v.introStart = performance.now();
+    });
+  }, [reduced, v]);
 
   const portrait = size.width < size.height;
   const desktop = size.width >= 900;
@@ -70,6 +85,15 @@ export default function CameraRig({ reduced }: { reduced: boolean }) {
 
     v.pos.lerpVectors(v.a.set(...A.pos), v.b.set(...B.pos), f);
     v.target.lerpVectors(v.a.set(...A.target), v.b.set(...B.target), f);
+
+    // Opening swoop: start high above, spiral down onto the first shot.
+    if (v.intro < 1) {
+      v.intro = v.introStart < 0 ? 0 : Math.min(1, (performance.now() - v.introStart) / 3200);
+      const k = 1 - Math.pow(1 - v.intro, 3);
+      const rest = 1 - k;
+      v.pos.sub(v.target).applyAxisAngle(v.up, -rest * 1.6).multiplyScalar(1 + rest * 0.7).add(v.target);
+      v.pos.y += rest * 9;
+    }
 
     // Pull back on portrait screens so the subject fits.
     if (portrait) v.pos.sub(v.target).multiplyScalar(1.35).add(v.target);

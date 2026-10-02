@@ -60,6 +60,9 @@ export const roomState = {
   /** 0 = day, 1 = night. `night` eases toward `nightTarget`. */
   night: 0,
   nightTarget: 0,
+  /** Desk lamp switch (double-click the lamp). `lamp` eases toward it. */
+  lampOn: true,
+  lamp: 1,
   /** DOM speech bubble the robot positions over its head (lives outside the canvas). */
   bubble: null as HTMLDivElement | null,
 };

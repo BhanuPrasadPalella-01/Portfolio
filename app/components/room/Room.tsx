@@ -5,6 +5,8 @@ import { useFrame } from "@react-three/fiber";
 import { RoundedBox } from "@react-three/drei";
 import * as THREE from "three";
 import { C, roomState } from "./config";
+import { sfx } from "../../lib/sound";
+import { setCursor } from "../../lib/cursor";
 import {
   deskTexture,
   fabricTexture,
@@ -94,13 +96,27 @@ function Chair({ fabric }: { fabric: THREE.Texture }) {
 function Lamp() {
   const light = useRef<THREE.PointLight>(null);
   const bulb = useRef<THREE.MeshStandardMaterial>(null);
-  useFrame(() => {
+  useFrame((_, dt) => {
+    roomState.lamp += ((roomState.lampOn ? 1 : 0) - roomState.lamp) * (1 - Math.exp(-dt * 12));
     const n = roomState.night;
-    if (light.current) light.current.intensity = 1.2 + n * 9;
-    if (bulb.current) bulb.current.emissiveIntensity = 1.5 + n * 4;
+    const on = roomState.lamp;
+    if (light.current) light.current.intensity = (1.2 + n * 9) * on;
+    if (bulb.current) bulb.current.emissiveIntensity = (1.5 + n * 4) * on + 0.05;
   });
   return (
-    <group position={[2.0, 1.55, -3.65]}>
+    <group
+      position={[2.0, 1.55, -3.65]}
+      onDoubleClick={(e) => {
+        e.stopPropagation();
+        roomState.lampOn = !roomState.lampOn;
+        sfx.click();
+      }}
+      onPointerOver={(e) => {
+        e.stopPropagation();
+        setCursor("scene", { variant: "label", label: "Double-click" });
+      }}
+      onPointerOut={() => setCursor("scene", null)}
+    >
       <mesh position={[0, 0.02, 0]} castShadow>
         <cylinderGeometry args={[0.17, 0.19, 0.04, 40]} />
         <meshStandardMaterial color={C.ink} metalness={0.7} roughness={0.3} />

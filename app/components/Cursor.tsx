@@ -78,6 +78,7 @@ export default function Cursor() {
       <div
         ref={disc}
         aria-hidden="true"
+        data-no-print
         // Blend mode must sit on the fixed element: it's the stacking context.
         className={`pointer-events-none fixed top-0 left-0 z-[200] will-change-transform ${isHover ? "mix-blend-difference" : ""}`}
         style={{ transform: "translate(-100px, -100px)" }}
@@ -103,6 +104,7 @@ export default function Cursor() {
       <div
         ref={dot}
         aria-hidden="true"
+        data-no-print
         className="pointer-events-none fixed top-0 left-0 z-[201] will-change-transform"
         style={{ transform: "translate(-100px, -100px)" }}
       >

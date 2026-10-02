@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import { usePathname, useRouter } from "next/navigation";
 import { gsap, prefersReducedMotion } from "../../lib/gsap";
 import { scrollToTop } from "../SmoothScroll";
+import { sfx } from "../../lib/sound";
 
 type Navigate = (href: string, label?: string) => void;
 
@@ -41,6 +42,7 @@ export default function TransitionProvider({ children }: { children: React.React
         return;
       }
       busy.current = true;
+      sfx.whoosh();
       setLabel(explicitLabel ?? labelFor(href));
       const panels = curtain.current!.querySelectorAll<HTMLElement>("[data-panel]");
       const text = curtain.current!.querySelector<HTMLElement>("[data-label]");

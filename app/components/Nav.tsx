@@ -7,6 +7,8 @@ import Magnetic from "./ui/Magnetic";
 import Scramble from "./ui/Scramble";
 import Logo from "./Logo";
 import ThemeToggle from "./ThemeToggle";
+import SoundToggle from "./SoundToggle";
+import { emit } from "../lib/events";
 import { navLinks, site } from "../lib/site";
 import { gsap } from "../lib/gsap";
 
@@ -97,9 +99,19 @@ export default function Nav() {
           </nav>
 
           <div className="flex items-center gap-3 sm:gap-4">
-            <span className="hidden font-mono text-[11px] tracking-[0.15em] text-ink-soft lg:block">
+            <span className="hidden font-mono text-[11px] tracking-[0.15em] text-ink-soft xl:block">
               COIMBATORE · {time} IST
             </span>
+            <button
+              type="button"
+              onClick={() => emit("palette-open", undefined)}
+              aria-label="Open command palette"
+              data-cursor="Search"
+              className="hidden h-11 items-center gap-2 rounded-full border border-surface-border bg-background/70 px-3.5 font-mono text-[11px] text-ink-soft backdrop-blur-xl transition-colors hover:border-ink hover:text-ink lg:flex"
+            >
+              <span className="rounded border border-surface-border px-1">⌘</span>K
+            </button>
+            <SoundToggle className="hidden sm:flex" />
             <ThemeToggle />
             <div className="hidden md:block">
             <Magnetic>

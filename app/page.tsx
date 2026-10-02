@@ -1,5 +1,6 @@
 import RoomExperience from "./components/room/RoomExperience";
 import TourProgress from "./components/room/TourProgress";
+import RobotChat from "./components/room/RobotChat";
 import TransitionLink from "./components/transition/TransitionLink";
 import Magnetic from "./components/ui/Magnetic";
 import Reveal from "./components/ui/Reveal";
@@ -58,6 +59,7 @@ export default function Home() {
   return (
     <>
       <RoomExperience />
+      <RobotChat />
       <TourProgress stops={["Intro", ...projects.map((p) => p.title), "Certificates", "Fin"]} />
 
       <div id="tour" className="pointer-events-none relative z-10">
@@ -103,7 +105,7 @@ export default function Home() {
                   </TransitionLink>
                 </div>
                 <p data-reveal-item className="mt-10 hidden font-mono text-[11px] text-ink-soft md:block">
-                  ↳ psst — the robot is watching your cursor. Try poking it.
+                  ↳ psst — poke the robot, drag the mini bots, knock the mug, double-click the lamp. ⌘K for everything.
                 </p>
               </Reveal>
             </div>

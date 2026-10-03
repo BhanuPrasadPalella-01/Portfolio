@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { Suspense, useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { RoundedBox } from "@react-three/drei";
 import * as THREE from "three";
 import { C, roomState } from "./config";
+import { ArmChair, DeskLamp, DrawerShelf, LowCabinet, PottedPlant, Succulent, Vase } from "./Models";
 import { sfx } from "../../lib/sound";
 import { setCursor } from "../../lib/cursor";
 import {
@@ -15,6 +16,12 @@ import {
   rugTexture,
   skyTexture,
 } from "./surfaces";
+
+// Model orientation: Poly Haven assets face +z; turn them toward the desk / camera.
+const CHAIR_TURN = Math.PI + 0.35;
+const LAMP_TURN = 0;
+/** Height of the low cabinet's top (modern_wooden_cabinet at 1.5×). */
+export const CABINET_TOP = 1.02;
 
 // Static architecture and decor: the diorama shell, desk, chair, lamp, plant,
 // cabinet, window and clock. Lighting that depends on day/night lives here too
@@ -61,7 +68,7 @@ function Desk({ map }: { map: THREE.Texture }) {
   );
 }
 
-function Chair({ fabric }: { fabric: THREE.Texture }) {
+function PrimitiveChair({ fabric }: { fabric: THREE.Texture }) {
   return (
     <group position={[0.5, 0, -1.95]} rotation={[0, 0.35, 0]}>
       <RoundedBox args={[0.82, 0.14, 0.8]} radius={0.06} smoothness={4} position={[0, 0.95, 0]} castShadow>
@@ -93,30 +100,9 @@ function Chair({ fabric }: { fabric: THREE.Texture }) {
   );
 }
 
-function Lamp() {
-  const light = useRef<THREE.PointLight>(null);
-  const bulb = useRef<THREE.MeshStandardMaterial>(null);
-  useFrame((_, dt) => {
-    roomState.lamp += ((roomState.lampOn ? 1 : 0) - roomState.lamp) * (1 - Math.exp(-dt * 12));
-    const n = roomState.night;
-    const on = roomState.lamp;
-    if (light.current) light.current.intensity = (1.2 + n * 9) * on;
-    if (bulb.current) bulb.current.emissiveIntensity = (1.5 + n * 4) * on + 0.05;
-  });
+function PrimitiveLamp({ bulbRef }: { bulbRef: React.RefObject<THREE.MeshStandardMaterial | null> }) {
   return (
-    <group
-      position={[2.0, 1.55, -3.65]}
-      onDoubleClick={(e) => {
-        e.stopPropagation();
-        roomState.lampOn = !roomState.lampOn;
-        sfx.click();
-      }}
-      onPointerOver={(e) => {
-        e.stopPropagation();
-        setCursor("scene", { variant: "label", label: "Double-click" });
-      }}
-      onPointerOut={() => setCursor("scene", null)}
-    >
+    <>
       <mesh position={[0, 0.02, 0]} castShadow>
         <cylinderGeometry args={[0.17, 0.19, 0.04, 40]} />
         <meshStandardMaterial color={C.ink} metalness={0.7} roughness={0.3} />
@@ -132,15 +118,46 @@ function Lamp() {
         </mesh>
         <mesh position={[0, -0.06, 0]}>
           <sphereGeometry args={[0.07, 20, 20]} />
-          <meshStandardMaterial ref={bulb} color="#fff3d6" emissive="#ffcf8a" emissiveIntensity={2} toneMapped={false} />
+          <meshStandardMaterial ref={bulbRef} color="#fff3d6" emissive="#ffcf8a" emissiveIntensity={2} toneMapped={false} />
         </mesh>
       </group>
+    </>
+  );
+}
+
+function Lamp() {
+  const light = useRef<THREE.PointLight>(null);
+  const bulb = useRef<THREE.MeshStandardMaterial | null>(null);
+  useFrame((_, dt) => {
+    roomState.lamp += ((roomState.lampOn ? 1 : 0) - roomState.lamp) * (1 - Math.exp(-dt * 12));
+    const n = roomState.night;
+    const on = roomState.lamp;
+    if (light.current) light.current.intensity = (1.2 + n * 9) * on;
+    if (bulb.current) bulb.current.emissiveIntensity = (1.5 + n * 4) * on + 0.05;
+  });
+  return (
+    <group
+      position={[2.0, 1.55, -3.55]}
+      onDoubleClick={(e) => {
+        e.stopPropagation();
+        roomState.lampOn = !roomState.lampOn;
+        sfx.click();
+      }}
+      onPointerOver={(e) => {
+        e.stopPropagation();
+        setCursor("scene", { variant: "label", label: "Double-click" });
+      }}
+      onPointerOut={() => setCursor("scene", null)}
+    >
+      <Suspense fallback={<PrimitiveLamp bulbRef={bulb} />}>
+        <DeskLamp bulbRef={bulb} lightRef={light} rotation={[0, LAMP_TURN, 0]} />
+      </Suspense>
       <pointLight ref={light} position={[0.3, 0.55, 0.35]} color="#ffc98a" intensity={2} distance={6} decay={1.6} />
     </group>
   );
 }
 
-function Plant() {
+function PrimitivePlant() {
   const leaves = useMemo(() => {
     const out: { pos: [number, number, number]; rot: [number, number, number]; s: number }[] = [];
     for (let i = 0; i < 16; i++) {
@@ -176,7 +193,7 @@ function Plant() {
   );
 }
 
-function Cabinet() {
+function PrimitiveCabinet() {
   return (
     <group position={[-3.85, 0, 2.5]}>
       <RoundedBox args={[0.65, 1.0, 1.9]} radius={0.03} smoothness={4} position={[0, 0.5, 0]} castShadow receiveShadow>
@@ -344,10 +361,21 @@ export default function Room() {
       </mesh>
 
       <Desk map={t.desk} />
-      <Chair fabric={t.fabric} />
+      <Suspense fallback={<PrimitiveChair fabric={t.fabric} />}>
+        <ArmChair position={[0.5, 0, -1.95]} rotation={[0, CHAIR_TURN, 0]} />
+      </Suspense>
       <Lamp />
-      <Plant />
-      <Cabinet />
+      <Suspense fallback={<PrimitivePlant />}>
+        <PottedPlant position={[-3.35, 0, -3.35]} rotation={[0, 0.6, 0]} />
+      </Suspense>
+      <Suspense fallback={<PrimitiveCabinet />}>
+        <LowCabinet position={[-3.81, 0, 2.5]} rotation={[0, Math.PI / 2, 0]} scale={1.5} />
+        <Vase position={[-3.8, CABINET_TOP, 0.95]} />
+        <Succulent position={[-3.8, CABINET_TOP, 3.95]} />
+      </Suspense>
+      <Suspense fallback={null}>
+        <DrawerShelf position={[3.5, 0, -3.9]} scale={1.2} />
+      </Suspense>
       <Window day={t.day} night={t.night} />
       <Clock />
     </group>

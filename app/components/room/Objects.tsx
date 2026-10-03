@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { Suspense, useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { RoundedBox, useTexture } from "@react-three/drei";
 import * as THREE from "three";
 import Interactive from "./Interactive";
+import { AlarmClock, Books, PhotoFrame } from "./Models";
 import { C } from "./config";
 import { BOARD_NODES, laptopScreenTexture, whiteboardTexture } from "./textures";
 import { certificates } from "../../lib/site";
@@ -289,17 +290,11 @@ export function DeskProps() {
         <sphereGeometry args={[1, 24, 16]} />
         <meshPhysicalMaterial color="#e8e4dc" roughness={0.3} clearcoat={0.6} />
       </mesh>
-      {/* Book stack */}
-      {[
-        [0.06, C.bronze, 0.1],
-        [0.05, C.sand, -0.08],
-        [0.045, "#a7ae96", 0.15],
-      ].map(([h, color, r], i) => (
-        <mesh key={i} position={[-1.55, 1.55 + 0.03 + i * 0.055, -3.55]} rotation={[0, r as number, 0]} castShadow>
-          <boxGeometry args={[0.5, h as number, 0.36]} />
-          <meshStandardMaterial color={color as string} roughness={0.8} />
-        </mesh>
-      ))}
+      <Suspense fallback={null}>
+        <Books position={[-1.05, 1.55, -3.85]} scale={1.5} />
+        <AlarmClock position={[1.78, 1.55, -2.92]} rotation={[0, -0.45, 0]} />
+        <PhotoFrame position={[1.25, 1.55, -3.75]} rotation={[0, -Math.PI / 2 + 0.35, 0]} />
+      </Suspense>
     </group>
   );
 }

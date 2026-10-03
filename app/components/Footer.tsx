@@ -89,6 +89,8 @@ export default function Footer() {
             © {new Date().getFullYear()} {site.name}
             <br />
             Built with Next.js, Three.js &amp; GSAP
+            <br />
+            3D models: Poly Haven (CC0)
           </p>
         </div>
       </div>

@@ -17,6 +17,11 @@ function readTourStage() {
 
 const ease = (x: number) => x * x * (3 - 2 * x);
 
+const DEV_SHOT =
+  process.env.NODE_ENV !== "production" && typeof window !== "undefined"
+    ? Number(new URLSearchParams(window.location.search).get("shot") ?? -1)
+    : -1;
+
 // Flies the camera between SHOTS as the #tour element scrolls.
 export default function CameraRig({ reduced }: { reduced: boolean }) {
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
@@ -40,7 +45,7 @@ export default function CameraRig({ reduced }: { reduced: boolean }) {
   );
 
   useEffect(() => {
-    if (reduced || window.scrollY > 10) {
+    if (reduced || window.scrollY > 10 || DEV_SHOT >= 0) {
       v.intro = 1;
       return;
     }
@@ -66,7 +71,9 @@ export default function CameraRig({ reduced }: { reduced: boolean }) {
 
   useFrame((_, dt) => {
     dt = Math.min(dt, 0.1);
-    const target = readTourStage();
+    // Dev-only: ?shot=N pins the camera to tour stop N (for checking framing).
+    const pinned = DEV_SHOT >= 0 ? DEV_SHOT : null;
+    const target = pinned ?? readTourStage();
     v.stage = v.stage < 0 || reduced ? target : v.stage + (target - v.stage) * (1 - Math.exp(-dt * 3));
 
     // Small screens stack text and room: intro text is on top (room pushed down),

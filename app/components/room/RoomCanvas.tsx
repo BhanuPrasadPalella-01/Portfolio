@@ -13,6 +13,9 @@ import PartyRig from "./PartyRig";
 import { CertWall, DeskProps, InboxTray, Laptop, Whiteboard } from "./Objects";
 import { Corkboard, FractalPrint, HelixSculpture, SdrRadio, SwarmArena } from "./Lab";
 import { roomState } from "./config";
+import { preloadModels } from "./Models";
+
+preloadModels();
 import { dropShadowTexture } from "./surfaces";
 import { setCursor } from "../../lib/cursor";
 import { useTheme } from "../../lib/theme";

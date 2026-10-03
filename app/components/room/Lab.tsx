@@ -22,6 +22,19 @@ function useTexture(make: () => THREE.Texture) {
   return tex;
 }
 
+/**
+ * Invisible, raycastable volume. Thin objects (a spiral tube, antennas) are mostly
+ * empty space, so the pointer slips between them; this gives them a solid hover target.
+ */
+function HitArea({ args, position }: { args: [number, number, number]; position: [number, number, number] }) {
+  return (
+    <mesh position={position}>
+      <cylinderGeometry args={[args[0], args[0], args[1], args[2]]} />
+      <meshBasicMaterial transparent opacity={0} depthWrite={false} colorWrite={false} />
+    </mesh>
+  );
+}
+
 /** Protein secondary structure as a sculpture: helix, strand and coil beads. */
 export function HelixSculpture() {
   const spin = useRef<THREE.Group>(null);
@@ -53,7 +66,7 @@ export function HelixSculpture() {
   });
 
   return (
-    <Interactive label="Protein AI" href="/work/protein-structure" position={[-3.85, 1.0, 3.0]} lift={0.05}>
+    <Interactive label="Protein AI" href="/work/protein-structure" position={[-3.85, 1.02, 3.0]} lift={0.05}>
       {(h) => {
         hovered.current = h;
         return (
@@ -65,6 +78,7 @@ export function HelixSculpture() {
               <cylinderGeometry args={[0.012, 0.012, 0.25, 8]} />
               <meshStandardMaterial color={C.ink} metalness={0.8} roughness={0.3} />
             </mesh>
+            <HitArea args={[0.26, 1.15, 16]} position={[0, 0.58, 0]} />
             <group ref={spin} position={[0, 0.18, 0]}>
               <mesh geometry={tube} castShadow>
                 <meshPhysicalMaterial color="#e8dcc6" roughness={0.15} clearcoat={1} clearcoatRoughness={0.1} />
@@ -277,7 +291,7 @@ export function SdrRadio() {
     });
   });
   return (
-    <Interactive label="Mission SDR" href="/work/mission-aware-sdr" position={[-3.85, 1.0, 1.85]} lift={0.05}>
+    <Interactive label="Mission SDR" href="/work/mission-aware-sdr" position={[-3.85, 1.02, 1.85]} lift={0.05}>
       {(h) => {
         hovered.current = h;
         return (
@@ -285,6 +299,7 @@ export function SdrRadio() {
             <RoundedBox args={[0.34, 0.08, 0.5]} radius={0.02} position={[0, 0.04, 0]} castShadow>
               <meshPhysicalMaterial color="#25282f" roughness={0.35} metalness={0.4} clearcoat={0.6} />
             </RoundedBox>
+            <HitArea args={[0.3, 0.7, 12]} position={[-0.05, 0.33, 0]} />
             <mesh position={[0.171, 0.04, 0]}>
               <boxGeometry args={[0.005, 0.03, 0.42]} />
               <meshStandardMaterial color={C.bronze} metalness={0.9} roughness={0.2} />

@@ -5,6 +5,7 @@ type Events = {
   "robot-say": string;
   "robot-wave": void;
   "palette-open": void;
+  "glass-break": void;
 };
 
 type Handler<T> = (payload: T) => void;

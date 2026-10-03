@@ -125,6 +125,13 @@ export const sfx = {
   boop: () => tone(330, 0.25, { type: "sine", gain: 0.1, to: 180 }),
   party: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.18, { type: "triangle", gain: 0.07, delay: i * 0.09 })),
   type: () => tone(2200 + Math.random() * 600, 0.02, { type: "square", gain: 0.015 }),
+  shatter: () => {
+    noise(0.5, { gain: 0.22, from: 6000, to: 2500 });
+    tone(140, 0.25, { type: "sine", gain: 0.12, to: 60 });
+    for (let i = 0; i < 9; i++) {
+      tone(2500 + Math.random() * 3500, 0.12 + Math.random() * 0.2, { type: "triangle", gain: 0.03, delay: 0.05 + Math.random() * 0.6 });
+    }
+  },
 };
 
 export function isSoundOn() {

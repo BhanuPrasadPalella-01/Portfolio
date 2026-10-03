@@ -63,6 +63,8 @@ export const roomState = {
   /** Desk lamp switch (double-click the lamp). `lamp` eases toward it. */
   lampOn: true,
   lamp: 1,
+  /** Opening fly-through progress, 0 → 1 (1 when skipped). GlassPane shatters at IMPACT. */
+  intro: 0,
   /** DOM speech bubble the robot positions over its head (lives outside the canvas). */
   bubble: null as HTMLDivElement | null,
 };

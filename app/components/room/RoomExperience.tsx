@@ -3,6 +3,8 @@
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import { roomState } from "./config";
+import { on } from "../../lib/events";
+import { gsap } from "../../lib/gsap";
 
 const RoomCanvas = dynamic(() => import("./RoomCanvas"), { ssr: false });
 
@@ -19,6 +21,16 @@ function hasWebGL() {
 export default function RoomExperience() {
   const [env, setEnv] = useState<{ reduced: boolean; mobile: boolean } | null>(null);
   const bubble = useRef<HTMLDivElement>(null);
+  const flash = useRef<HTMLDivElement>(null);
+
+  // White flash when the opening shot smashes the window.
+  useEffect(
+    () =>
+      on("glass-break", () => {
+        if (flash.current) gsap.fromTo(flash.current, { opacity: 0.7 }, { opacity: 0, duration: 0.6, ease: "power2.out" });
+      }),
+    []
+  );
 
   useEffect(() => {
     roomState.bubble = bubble.current;
@@ -60,6 +72,7 @@ export default function RoomExperience() {
       <div className="fixed inset-0 z-0">
         <RoomCanvas reduced={env.reduced} mobile={env.mobile} />
       </div>
+      <div ref={flash} aria-hidden="true" className="pointer-events-none fixed inset-0 z-[1] bg-white opacity-0" />
       <div
         ref={bubble}
         data-show="false"

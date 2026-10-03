@@ -5,6 +5,7 @@ import { useFrame } from "@react-three/fiber";
 import { RoundedBox } from "@react-three/drei";
 import * as THREE from "three";
 import { C, roomState } from "./config";
+import GlassPane from "./GlassPane";
 import { ArmChair, DeskLamp, DrawerShelf, LowCabinet, PottedPlant, Succulent, Vase } from "./Models";
 import { sfx } from "../../lib/sound";
 import { setCursor } from "../../lib/cursor";
@@ -225,9 +226,19 @@ function Window({ day, night }: { day: THREE.Texture; night: THREE.Texture }) {
   });
   return (
     <group position={[1.6, 3.5, -4.17]}>
-      <RoundedBox args={[1.95, 1.45, 0.08]} radius={0.02} smoothness={3}>
-        <meshStandardMaterial color="#fbf7ef" roughness={0.5} />
-      </RoundedBox>
+      {/* Hollow frame lining the opening */}
+      {[
+        [-0.9325, 0, 0.085, 1.45],
+        [0.9325, 0, 0.085, 1.45],
+        [0, 0.6825, 1.78, 0.085],
+        [0, -0.6825, 1.78, 0.085],
+      ].map(([x, y, w, h]) => (
+        <mesh key={`${x}${y}`} position={[x, y, -0.13]} castShadow>
+          <boxGeometry args={[w, h, 0.34]} />
+          <meshStandardMaterial color="#fbf7ef" roughness={0.5} />
+        </mesh>
+      ))}
+      <GlassPane position={[0, 0, -0.12]} />
       <mesh position={[0, 0, 0.045]}>
         <planeGeometry args={[1.78, 1.28]} />
         <meshBasicMaterial ref={dayMat} map={day} transparent toneMapped={false} />
@@ -335,10 +346,18 @@ export default function Room() {
         <meshStandardMaterial attach="material-5" color="#b49a78" roughness={0.8} />
       </mesh>
       {/* Walls */}
-      <mesh position={[0, 2.6, -4.35]} receiveShadow>
-        <boxGeometry args={[9, 5.2, 0.3]} />
-        <meshStandardMaterial color={C.wall} map={t.plaster} roughness={0.95} />
-      </mesh>
+      {/* Back wall, built around a real window opening (the intro flies through it). */}
+      {[
+        [-1.9375, 2.6, 5.125, 5.2],
+        [3.5375, 2.6, 1.925, 5.2],
+        [1.6, 1.3875, 1.95, 2.775],
+        [1.6, 4.7125, 1.95, 0.975],
+      ].map(([x, y, w, h]) => (
+        <mesh key={`${x}${y}`} position={[x, y, -4.35]} receiveShadow castShadow>
+          <boxGeometry args={[w, h, 0.3]} />
+          <meshStandardMaterial color={C.wall} map={t.plaster} roughness={0.95} />
+        </mesh>
+      ))}
       <mesh position={[-4.35, 2.6, 0]} receiveShadow>
         <boxGeometry args={[0.3, 5.2, 9]} />
         <meshStandardMaterial color={C.wall} map={t.plaster} roughness={0.95} />

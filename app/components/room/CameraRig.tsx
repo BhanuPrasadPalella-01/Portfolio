@@ -5,6 +5,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { SHOTS, roomState } from "./config";
 import { onReady } from "../../lib/ready";
+import { IMPACT } from "./GlassPane";
 
 function readTourStage() {
   const tour = document.getElementById("tour");
@@ -16,6 +17,16 @@ function readTourStage() {
 }
 
 const ease = (x: number) => x * x * (3 - 2 * x);
+
+// Opening fly-through: outside behind the back wall → through the upper-left window pane
+// (the glass shatters at IMPACT) → into the room → blend into the first tour shot.
+const INTRO_MS = 5200;
+const FLY: { t: number; pos: [number, number, number]; target: [number, number, number] }[] = [
+  { t: 0, pos: [1.155, 6.4, -13], target: [1.0, 2.0, -1.2] },
+  { t: IMPACT + 0.006, pos: [1.155, 3.9, -4.62], target: [0.8, 1.5, 0.6] },
+  { t: 0.58, pos: [1.0, 3.25, -2.3], target: [0.4, 0.9, 2.0] },
+];
+const smooth = (x: number) => x * x * (3 - 2 * x);
 
 const DEV_SHOT =
   process.env.NODE_ENV !== "production" && typeof window !== "undefined"
@@ -36,21 +47,33 @@ export default function CameraRig({ reduced }: { reduced: boolean }) {
       stage: -1,
       px: 0,
       py: 0,
-      // Opening swoop: 0 → 1 once the preloader is gone (stays 1 when skipped).
+      // Opening fly-through: 0 → 1 once the preloader is gone (stays 1 when skipped).
       intro: 0,
-      introStart: -1,
-      up: new THREE.Vector3(0, 1, 0),
+      introArmed: false,
+      introElapsed: 0,
+      flyPos: new THREE.Vector3(),
+      flyTarget: new THREE.Vector3(),
     }),
     []
   );
 
   useEffect(() => {
-    if (reduced || window.scrollY > 10 || DEV_SHOT >= 0) {
+    // Play once per browser session; returning to Home later lands directly.
+    let seen = false;
+    try {
+      seen = sessionStorage.getItem("bp-intro") === "1";
+    } catch {}
+    if (reduced || seen || window.scrollY > 10 || DEV_SHOT >= 0) {
       v.intro = 1;
+      roomState.intro = 1;
       return;
     }
+    roomState.intro = 0;
     return onReady(() => {
-      v.introStart = performance.now();
+      v.introArmed = true;
+      try {
+        sessionStorage.setItem("bp-intro", "1");
+      } catch {}
     });
   }, [reduced, v]);
 
@@ -93,15 +116,6 @@ export default function CameraRig({ reduced }: { reduced: boolean }) {
     v.pos.lerpVectors(v.a.set(...A.pos), v.b.set(...B.pos), f);
     v.target.lerpVectors(v.a.set(...A.target), v.b.set(...B.target), f);
 
-    // Opening swoop: start high above, spiral down onto the first shot.
-    if (v.intro < 1) {
-      v.intro = v.introStart < 0 ? 0 : Math.min(1, (performance.now() - v.introStart) / 3200);
-      const k = 1 - Math.pow(1 - v.intro, 3);
-      const rest = 1 - k;
-      v.pos.sub(v.target).applyAxisAngle(v.up, -rest * 1.6).multiplyScalar(1 + rest * 0.7).add(v.target);
-      v.pos.y += rest * 9;
-    }
-
     // Pull back on portrait screens so the subject fits.
     if (portrait) v.pos.sub(v.target).multiplyScalar(1.35).add(v.target);
 
@@ -111,6 +125,42 @@ export default function CameraRig({ reduced }: { reduced: boolean }) {
     v.py += ((p.active && !reduced ? p.y : 0) - v.py) * (1 - Math.exp(-dt * 3));
     v.pos.x += v.px * 0.35;
     v.pos.y += v.py * 0.2;
+
+    // Opening fly-through overrides the tour pose until it hands over at the end.
+    if (v.intro < 1) {
+      // Advance per rendered frame (capped), so a slow first few frames slow the
+      // shot down instead of skipping straight past the glass.
+      if (v.introArmed) v.introElapsed += Math.min(dt, 1 / 30) * 1000;
+      v.intro = Math.min(1, v.introElapsed / INTRO_MS);
+      roomState.intro = v.intro;
+      const t = v.intro;
+      const last = FLY[FLY.length - 1];
+      if (t < last.t) {
+        const k = FLY.findIndex((key, j) => j < FLY.length - 1 && t >= key.t && t < FLY[j + 1].t);
+        const A = FLY[k];
+        const B = FLY[k + 1];
+        const u = (t - A.t) / (B.t - A.t);
+        // Accelerate into the glass, then decelerate into the room.
+        const e = k === 0 ? Math.pow(u, 2.2) : 1 - Math.pow(1 - u, 2);
+        v.flyPos.lerpVectors(v.a.set(...A.pos), v.b.set(...B.pos), e);
+        v.flyTarget.lerpVectors(v.a.set(...A.target), v.b.set(...B.target), e);
+        v.pos.copy(v.flyPos);
+        v.target.copy(v.flyTarget);
+      } else {
+        const u = smooth((t - last.t) / (1 - last.t));
+        v.pos.lerpVectors(v.a.set(...last.pos), v.pos, u);
+        v.target.lerpVectors(v.b.set(...last.target), v.target, u);
+      }
+      // A short jolt as the camera hits the glass.
+      const jolt = t >= IMPACT && t < IMPACT + 0.05 ? (1 - (t - IMPACT) / 0.05) * 0.06 : 0;
+      if (jolt) v.pos.add(v.a.set((Math.random() - 0.5) * jolt, (Math.random() - 0.5) * jolt, 0));
+      // Keep the window centred during the fly-through; restore the side framing as it lands.
+      if (desktop) {
+        const { width: w, height: h } = size;
+        const off = smooth(THREE.MathUtils.clamp((t - last.t) / (1 - last.t), 0, 1));
+        camera.setViewOffset(w, h, -w * 0.17 * off, 0, w, h);
+      }
+    }
 
     camera.position.copy(v.pos);
     v.lookAt.copy(v.target);

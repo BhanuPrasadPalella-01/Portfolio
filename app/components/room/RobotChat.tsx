@@ -18,6 +18,7 @@ export default function RobotChat() {
     { from: "bot", text: "Hi! I know everything Bhanu has built. Ask away." },
   ]);
   const [typing, setTyping] = useState(false);
+  const [ai, setAi] = useState(false);
   const panel = useRef<HTMLDivElement>(null);
   const list = useRef<HTMLDivElement>(null);
   const field = useRef<HTMLInputElement>(null);
@@ -33,11 +34,40 @@ export default function RobotChat() {
     }
   }, [open]);
 
+  // Is the Claude-powered brain switched on (API key set on the server)?
+  useEffect(() => {
+    fetch("/api/robot")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => setAi(Boolean(d?.ai)))
+      .catch(() => {});
+  }, []);
+
   useEffect(() => {
     list.current?.scrollTo({ top: list.current.scrollHeight, behavior: "smooth" });
   }, [messages, typing]);
 
-  const ask = (text: string) => {
+  // Ask the server (Claude when configured); fall back to the local brain on any failure.
+  const fetchReply = async (q: string): Promise<Reply> => {
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), 15000);
+    try {
+      const res = await fetch("/api/robot", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: q }),
+        signal: controller.signal,
+      });
+      const data = await res.json();
+      if (!res.ok || typeof data?.text !== "string") throw new Error("bad reply");
+      return { text: data.text, link: data.link };
+    } catch {
+      return answer(q);
+    } finally {
+      window.clearTimeout(timer);
+    }
+  };
+
+  const ask = async (text: string) => {
     const q = text.trim();
     if (!q) {
       setError("Type a question first");
@@ -48,14 +78,17 @@ export default function RobotChat() {
     setMessages((m) => [...m, { from: "you", text: q }]);
     setTyping(true);
     sfx.click();
-    const reply = answer(q);
+    const started = Date.now();
+    const reply = await fetchReply(q);
+    // Keep a short "typing" beat even when the answer is instant.
+    const wait = Math.max(0, 600 - (Date.now() - started));
     window.setTimeout(() => {
       setTyping(false);
       setMessages((m) => [...m, { from: "bot", ...reply }]);
       emit("robot-say", reply.text.length > 70 ? reply.text.slice(0, 68) + "…" : reply.text);
       emit("robot-wave", undefined);
       sfx.beep();
-    }, 550 + Math.min(reply.text.length * 6, 900));
+    }, wait);
   };
 
   return (
@@ -74,7 +107,7 @@ export default function RobotChat() {
               <span className="relative inline-flex h-2 w-2 rounded-full bg-[#62d26f]" />
             </span>
             <span className="font-display text-lg text-ink">RescueBot</span>
-            <span className="font-mono text-[10px] text-ink-soft">offline brain · no AI API</span>
+            <span className="font-mono text-[10px] text-ink-soft">{ai ? "powered by Claude" : "offline brain"}</span>
           </div>
           <button type="button" onClick={() => setOpen(false)} aria-label="Close chat" className="text-ink-soft hover:text-ink">
             ✕

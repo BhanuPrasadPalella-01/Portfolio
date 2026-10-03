@@ -58,23 +58,27 @@ export default function CameraRig({ reduced }: { reduced: boolean }) {
   );
 
   useEffect(() => {
-    // Play once per browser session; returning to Home later lands directly.
-    let seen = false;
-    try {
-      seen = sessionStorage.getItem("bp-intro") === "1";
-    } catch {}
-    if (reduced || seen || window.scrollY > 10 || DEV_SHOT >= 0) {
+    // Plays every time Home opens at the top (skipped for reduced motion, or when
+    // the page is restored mid-scroll so the tour position isn't hijacked).
+    if (reduced || window.scrollY > 10 || DEV_SHOT >= 0) {
       v.intro = 1;
       roomState.intro = 1;
       return;
     }
     roomState.intro = 0;
-    return onReady(() => {
-      v.introArmed = true;
-      try {
-        sessionStorage.setItem("bp-intro", "1");
-      } catch {}
+    // On first load this fires when the preloader ends. When arriving from another
+    // page it fires immediately, so wait for the transition curtain to lift first.
+    let sync = true;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const off = onReady(() => {
+      if (sync) timer = setTimeout(() => (v.introArmed = true), 1000);
+      else v.introArmed = true;
     });
+    sync = false;
+    return () => {
+      off();
+      clearTimeout(timer);
+    };
   }, [reduced, v]);
 
   const portrait = size.width < size.height;

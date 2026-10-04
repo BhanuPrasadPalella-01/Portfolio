@@ -102,7 +102,7 @@ function GnnRl() {
         </g>
       ))}
       <text x="40" y="560" fontFamily="monospace" fontSize="20" fill={INK} opacity="0.6">
-        AoCI ↑ 8.4%   ·   error ↓ 44%
+        error ↓ 20%   ·   45 + 325 real sensors
       </text>
     </>
   );

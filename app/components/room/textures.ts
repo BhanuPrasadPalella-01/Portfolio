@@ -122,10 +122,10 @@ export function whiteboardTexture() {
     ctx.fillText("GNN + RL scheduler", 560, 90);
     ctx.font = `26px ${monoFont()}`;
     ctx.fillStyle = C.bronze;
-    ctx.fillText("AoCI  ↑ 8.4%", 740, 470);
-    ctx.fillText("error ↓ 44%", 740, 512);
+    ctx.fillText("error ↓ 20%", 740, 470);
+    ctx.fillText("10/10 windows", 740, 512);
     ctx.fillStyle = "#2b3140";
-    ctx.fillText("r = −Σ AoIᵢ − λ·starve", 690, 590);
+    ctx.fillText("r = −log tr(P) / M", 690, 590);
     ctx.strokeStyle = C.bronze;
     ctx.lineWidth = 3;
     ctx.strokeRect(720, 436, 230, 96);

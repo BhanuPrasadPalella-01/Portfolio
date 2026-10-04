@@ -30,6 +30,7 @@ const milestones: Milestone[] = [
   { when: "May 2026", title: "FractalLab & FlockHunt", detail: "Semester 2: wrote the fractal rendering engine and the core boid behaviour.", href: "/work/fractallab-flockhunt" },
   { when: "Aug 2026", title: "Deloitte & TATA", detail: "Completed two data-analytics job simulations on Forage.", href: "#certifications" },
   { when: "2026", title: "Protein Structure AI", detail: "Attention-augmented BiLSTM reaches 80.09% Q3; deployed with a live prediction app.", href: "/work/protein-structure" },
+  { when: "Oct 2026", title: "Siemens job simulation", detail: "Operations industrial engineering on Forage: time studies and proposing layout changes.", href: "#certifications" },
   { when: "Now", title: "Research in progress", detail: "Adaptive PSO for rescue robots, mission-aware SDR scheduling and GNN-RL sensor scheduling.", href: "/work" },
 ];
 
@@ -142,7 +143,7 @@ export default function AboutPage() {
             </p>
           </Reveal>
         </div>
-        <Reveal className="mt-14 grid gap-8 md:grid-cols-2">
+        <Reveal className="mt-14 grid gap-8 md:grid-cols-2 xl:grid-cols-3">
           {certificates.map((c) => (
             <div key={c.title} data-reveal-item>
               <TiltCard max={6} className="group rounded-[1.75rem] border border-ink/10 bg-surface p-3">
@@ -168,14 +169,19 @@ export default function AboutPage() {
                   </div>
                 </a>
               </TiltCard>
-              <a
-                href={c.programUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="link-line mt-4 ml-4 inline-block font-mono text-[11px] tracking-[0.15em] text-ink-soft uppercase hover:text-ink"
-              >
-                About this program
-              </a>
+              {c.skills && (
+                <p className="mt-4 ml-4 font-mono text-[11px] tracking-[0.12em] text-ink-soft uppercase">{c.skills.join(" · ")}</p>
+              )}
+              {c.programUrl && (
+                <a
+                  href={c.programUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="link-line mt-4 ml-4 inline-block font-mono text-[11px] tracking-[0.15em] text-ink-soft uppercase hover:text-ink"
+                >
+                  About this program
+                </a>
+              )}
             </div>
           ))}
         </Reveal>

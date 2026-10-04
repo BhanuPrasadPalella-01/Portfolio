@@ -33,7 +33,7 @@ export const SHOTS: Shot[] = [
   { pos: [-0.4, 3.0, 0.4], target: [-2.6, 2.85, -4.1] }, // whiteboard → GNN-RL
   { pos: [0.9, 2.9, -1.0], target: [-0.7, 1.6, -3.25] }, // inbox → Complaints
   { pos: [0.6, 3.1, 2.7], target: [-4.1, 3.1, 2.7] }, // fractal print → FractalLab
-  { pos: [1.4, 2.9, 0.2], target: [-4.1, 2.75, -0.15] }, // certificate wall → About
+  { pos: [1.9, 2.9, -0.2], target: [-4.1, 2.75, -0.22] }, // certificate wall → About
   { pos: [12, 9, 12], target: [-0.4, 1.3, -0.6] }, // outro
 ];
 

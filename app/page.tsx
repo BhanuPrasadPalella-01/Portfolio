@@ -161,7 +161,7 @@ export default function Home() {
               Certified by <em className="italic">industry</em>.
             </h2>
             <p data-reveal-item className="mt-5 leading-relaxed text-ink">
-              Data-analytics job simulations from Deloitte and TATA — framed on the wall, filed on
+              Industry job simulations from Siemens, Deloitte and TATA — framed on the wall, filed on
               the about page.
             </p>
             <div data-reveal-item className="mt-7">

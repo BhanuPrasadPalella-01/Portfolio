@@ -63,7 +63,7 @@ export function answer(input: string): Reply {
 
   if (has(q, "cert*", "deloitte", "tata", "forage"))
     return {
-      text: `Two industry job simulations: ${certificates.map((c) => `${c.issuer} — ${c.title}`).join("; ")}.`,
+      text: `${certificates.length} industry job simulations: ${certificates.map((c) => `${c.issuer} — ${c.title}`).join("; ")}.`,
       link: { label: "See certificates", href: "/about" },
     };
 

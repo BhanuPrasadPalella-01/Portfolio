@@ -17,7 +17,24 @@ export const navLinks = [
   { href: "/contact", label: "Contact" },
 ];
 
-export const certificates = [
+// Newest first. `programUrl` links to the program page where one is known.
+export const certificates: {
+  issuer: string;
+  title: string;
+  date: string;
+  pdf: string;
+  preview: string;
+  programUrl?: string;
+  skills?: string[];
+}[] = [
+  {
+    issuer: "Siemens",
+    title: "Operations Industrial Engineer Job Simulation",
+    date: "Oct 2026",
+    pdf: "/certificates/siemens-operations-industrial-engineer.pdf",
+    preview: "/certificates/previews/siemens-operations-industrial-engineer.png",
+    skills: ["Time studies", "Proposing layout changes"],
+  },
   {
     issuer: "Deloitte",
     title: "Data Analytics Job Simulation",

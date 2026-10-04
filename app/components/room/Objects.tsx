@@ -193,7 +193,7 @@ export function CertWall() {
   return (
     <group position={[-4.17, 2.75, 0]} rotation={[0, Math.PI / 2, 0]}>
       {certificates.map((cert, i) => (
-        <Interactive key={cert.title} label={cert.issuer} href="/about" position={[1.0 - i * 1.7, 0, 0]} lift={0.04}>
+        <Interactive key={cert.title} label={cert.issuer} href="/about" position={[1.6 - i * 1.38, 0, 0]} lift={0.04}>
           {(hovered) => (
             <group rotation={[0, 0, hovered ? -0.03 : 0]}>
               <mesh castShadow>

@@ -334,6 +334,7 @@ const drafts: Draft[] = [
     ],
     results:
       "On the real lab network the learned scheduler cut the base station's temperature error by 20% versus classic Max-AoI scheduling and beat the model-based Kalman-greedy scheduler on 10 of 10 held-out test windows (p = 0.002). On the freeway network, where correlation is sparse, the gain is small (2%), but it still beats Kalman-greedy on 14 of 15 test windows. On simulated 50-sensor networks it halves the error of Max-AoI; on very large simulated networks (100–200 sensors) Kalman-greedy is still 9–12% better.",
+    links: [{ label: "Code, results and live demo", href: "https://github.com/BhanuPrasadPalella-01/gnn-aoi-scheduler" }],
   },
   {
     slug: "complaint-intelligence",

@@ -57,6 +57,20 @@ function limited(ip: string) {
   return false;
 }
 
+// Browsers always send Origin on this POST, so a missing or foreign one means a script
+// calling the API directly. (Origin can still be forged, so a spend limit on the API
+// key remains the real safeguard.)
+function fromThisSite(request: Request) {
+  const origin = request.headers.get("origin");
+  const host = request.headers.get("host");
+  if (!origin || !host) return false;
+  try {
+    return new URL(origin).host === host;
+  } catch {
+    return false;
+  }
+}
+
 function offline(question: string, note?: string) {
   const reply = answer(question);
   return Response.json({ ...reply, source: "offline", note });
@@ -74,9 +88,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   // Only accept calls from this site's own pages.
-  const origin = request.headers.get("origin");
-  const host = request.headers.get("host");
-  if (origin && host && new URL(origin).host !== host) {
+  if (!fromThisSite(request)) {
     return Response.json({ error: "Forbidden" }, { status: 403 });
   }
 

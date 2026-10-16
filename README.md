@@ -1,36 +1,63 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Bhanu Prasad Palella: Portfolio
 
-## Getting Started
+**Live site:** <https://bhanuprasadpalella.vercel.app>
 
-First, run the development server:
+Personal portfolio of an AI & Data Science student at Amrita School of Artificial Intelligence. The home page
+is an interactive 3D room: each object in it is a project, and a small rescue robot answers questions about
+the work.
+
+## What's inside
+
+* **3D room home page:** a camera tour through the room, where each object opens a project (React Three Fiber).
+* **9 project pages** (`/work`): research, robotics, ML systems and web apps, each with an overview,
+  highlights, results, tech stack and links to code or live demos.
+* **RescueBot chat:** answers questions about the projects, skills and contact details. It uses Claude when
+  `ANTHROPIC_API_KEY` is set and falls back to an offline keyword brain otherwise. The API only accepts
+  same-site requests and is rate-limited per visitor.
+* **Notes** (`/notes`): short write-ups of lessons from the projects.
+* **About, Resume and Contact** pages, a command palette, light/dark themes, optional sound, page transitions
+  and smooth scrolling.
+* Generated link-preview images for the site and for each project page.
+
+## Built with
+
+Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS 4, Three.js with React Three Fiber, drei and
+postprocessing, GSAP, Lenis, the Anthropic SDK, and Vercel Analytics.
+
+## Run locally
+
+```bash
+npm install
+```
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Then open <http://localhost:3000>. The chat works without a key (offline answers); to use Claude, create
+`.env.local` with:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+ANTHROPIC_API_KEY=your-key
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Other scripts: `npm run build`, `npm start`, `npm run lint`.
 
-## Learn More
+## Where things live
 
-To learn more about Next.js, take a look at the following resources:
+```
+app/page.tsx              Home page with the 3D room
+app/components/room/      Room scene, camera rig, models, robot and chat
+app/work/[slug]/          Project pages
+app/lib/projects.ts       All project content (also what the chat knows)
+app/lib/site.ts           Name, contact links, skills and certificates
+app/lib/notes.ts          Notes content
+app/api/robot/route.ts    RescueBot chat API
+public/                   Models, photos, project images and certificates
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deploy
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Deployed on Vercel: every push to `main` builds and goes live. Set `ANTHROPIC_API_KEY` in the Vercel
+project's environment variables to enable Claude answers, and set a spend limit on that key in the Anthropic
+Console.
